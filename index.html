@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Style Advisor — Dein persönlicher KI-Stylist</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: ['attribute', '[data-theme="dark"]'],
+    theme: {
+      extend: {
+        colors: {
+          cream: { DEFAULT: '#F5F2F8', dark: '#1A1020' },
+          gold:  { DEFAULT: '#795A71', light: '#9B7A96', dim: '#5A4055' },
+          rose:  { DEFAULT: '#CF9775', light: '#D4A882' },
+        },
+        fontFamily: {
+          serif:  ['Georgia', 'Cambria', '"Times New Roman"', 'serif'],
+          sans:   ['-apple-system','BlinkMacSystemFont','"Segoe UI"','Roboto','sans-serif'],
+        },
+        animation: {
+          'fade-in':  'fadeIn .35s ease',
+          'slide-up': 'slideUp .4s cubic-bezier(.22,.61,.36,1)',
+          'spin-slow': 'spin 2s linear infinite',
+          'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        },
+        keyframes: {
+          fadeIn:    { from:{ opacity:0 }, to:{ opacity:1 } },
+          slideUp:   { from:{ opacity:0, transform:'translateY(24px)' }, to:{ opacity:1, transform:'translateY(0)' } },
+          pulseSoft: { '0%,100%':{ opacity:.6 }, '50%':{ opacity:1 } },
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg:    #F5F2F8; --bg2: #ECE6F2; --card: #FFFFFF;
+    --border:#DDD5E8; --text: #2A1F2D; --sub:  #7A6B80;
+    --gold:  #795A71; --rose: #CF9775; --green:#5A8A6A;
+  }
+  [data-theme="dark"] {
+    --bg:    #1A1020; --bg2: #241730; --card: #2C1E38;
+    --border:#3A2545; --text: #F0EDF5; --sub:  #9A8AA0;
+    --gold:  #9B7A96; --rose: #D4A882; --green:#72A882;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: background .3s, color .3s;
+    min-height: 100vh;
+  }
+  .screen { display: none; animation: fadeIn .35s ease; }
+  .screen.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+  .btn-gold {
+    background: var(--gold); color: #fff; border: none; border-radius: 999px;
+    padding: .75rem 2rem; font-size: .95rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    display: inline-flex; align-items: center; gap: .5rem;
+  }
+  .btn-gold:hover { opacity: .88; transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent; color: var(--text); border: 1.5px solid var(--border);
+    border-radius: 999px; padding: .65rem 1.5rem; font-size: .9rem; font-weight: 500;
+    cursor: pointer; transition: border-color .2s, background .2s;
+    display: inline-flex; align-items: center; gap: .5rem;
+  }
+  .btn-outline:hover { border-color: var(--gold); background: var(--bg2); }
+  .chip {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .45rem 1rem; border-radius: 999px;
+    border: 1.5px solid var(--border); background: var(--card);
+    font-size: .85rem; cursor: pointer; transition: all .2s; white-space: nowrap;
+    color: var(--text);
+  }
+  .chip:hover { border-color: var(--gold); }
+  .chip.selected { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .chip-body { padding: .5rem 1.1rem; border-radius: 12px; font-size: .85rem; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--card); color: var(--text);
+    transition: all .2s; text-align: center; }
+  .chip-body:hover { border-color: var(--gold); }
+  .chip-body.selected { background: var(--gold); border-color: var(--gold); color: #fff; }
+  input, select, textarea {
+    background: var(--card); border: 1.5px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: .7rem 1rem; font-size: .9rem; width: 100%;
+    transition: border-color .2s; outline: none; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  label { font-size: .85rem; font-weight: 500; color: var(--sub); display: block; margin-bottom: .4rem; }
+  .section-title { font-family: Georgia, serif; font-size: 1.5rem; font-weight: 400; margin-bottom: .25rem; }
+  .section-sub { font-size: .9rem; color: var(--sub); margin-bottom: 1.5rem; line-height: 1.6; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 999px; transition: width .4s ease; }
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    background: rgba(248,245,240,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); transition: background .3s; }
+  [data-theme="dark"] .nav { background: rgba(17,17,16,.92); }
+  .nav-inner { max-width: 900px; margin: 0 auto; padding: .85rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-family: Georgia, serif; font-size: 1.1rem; letter-spacing: .02em; cursor: pointer; }
+  .nav-logo span { color: var(--gold); font-style: italic; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--text);
+    padding: .4rem; border-radius: 8px; transition: background .2s; display: flex; }
+  .icon-btn:hover { background: var(--bg2); }
+  .look-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+  .look-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,.1); }
+  .rating-bar { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; flex: 1; }
+  .rating-fill { height: 100%; border-radius: 999px; }
+  .tag-badge { display: inline-flex; align-items: center; padding: .3rem .75rem;
+    border-radius: 999px; font-size: .78rem; font-weight: 500; }
+  .chat-bubble-ai { background: var(--bg2); border-radius: 16px 16px 16px 4px;
+    padding: .85rem 1.1rem; max-width: 80%; font-size: .9rem; line-height: 1.6; color: var(--text); }
+  .chat-bubble-user { background: var(--gold); color: #fff; border-radius: 16px 16px 4px 16px;
+    padding: .85rem 1.1rem; max-width: 80%; font-size: .9rem; line-height: 1.6; margin-left: auto; }
+  .upload-zone { border: 2px dashed var(--border); border-radius: 16px;
+    padding: 2.5rem; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--gold); background: var(--bg2); }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+    transition: transform .15s, border-color .15s; flex-shrink: 0; }
+  .color-swatch.selected { border-color: var(--gold); transform: scale(1.15); }
+  .form-page { display: none; }
+  .form-page.active { display: block; animation: slideUp .4s cubic-bezier(.22,.61,.36,1); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  .loading-ring { width: 64px; height: 64px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--gold);
+    animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: .85rem 1.5rem; font-size: .9rem; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    z-index: 9999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  @media (max-width: 640px) {
+    .nav-inner { padding: .75rem 1rem; }
+    .section-title { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ TOP NAVIGATION ═══════════════════════ -->
+<nav class="nav" id="mainNav" style="display:none">
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="showScreen('s-landing')">
+      AI <span style="color:var(--rose)">Style</span> <span style="color:var(--gold)">Advisor</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <div id="navProgress" style="display:none;width:120px">
+        <div class="progress-bar"><div class="progress-fill" id="navProgressFill" style="width:25%"></div></div>
+        <div style="font-size:.72rem;color:var(--sub);margin-top:.3rem;text-align:center" id="navProgressLabel">Schritt 1 von 4</div>
+      </div>
+      <button class="icon-btn" onclick="showScreen('s-chat')" title="KI-Chat">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="showScreen('s-saved')" title="Gespeicherte Looks">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="toggleDark()" id="darkToggle" title="Dark Mode">
+        <svg id="sunIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="moonIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="display:none"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ TOAST ═══════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════ SCREEN: LANDING ═══════════════════════ -->
+<section id="s-landing" class="screen active">
+  <div style="min-height:100vh;display:flex;flex-direction:column">
+    <!-- Hero -->
+    <div style="flex:1;background:linear-gradient(135deg,#2A1F2D 0%,#472C45 45%,#795A71 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 1.5rem;text-align:center">
+      <!-- Decorative circles -->
+      <div style="position:absolute;width:600px;height:600px;border-radius:50%;border:1px solid rgba(210,192,194,.15);top:-200px;left:-150px;pointer-events:none"></div>
+      <div style="position:absolute;width:400px;height:400px;border-radius:50%;border:1px solid rgba(207,151,117,.12);bottom:-100px;right:-100px;pointer-events:none"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(121,90,113,.25) 0%,transparent 60%);pointer-events:none"></div>
+
+      <div style="position:relative;z-index:1;max-width:640px">
+        <div style="display:inline-flex;align-items:center;gap:.5rem;background:rgba(210,192,194,.15);border:1px solid rgba(210,192,194,.35);border-radius:999px;padding:.4rem 1.1rem;font-size:.8rem;color:#D2C0C2;font-weight:500;margin-bottom:2rem">
+          ✦ KI-gestützte Stilberatung
+        </div>
+        <h1 style="font-family:Georgia,serif;font-size:clamp(2.5rem,7vw,4.5rem);font-weight:400;color:#F0EDF5;line-height:1.1;margin-bottom:1.25rem">
+          Dein persönlicher<br><em style="color:#D2C0C2">KI-Stylist</em>
+        </h1>
+        <p style="font-size:1.05rem;color:rgba(240,237,231,.65);line-height:1.7;margin-bottom:2.5rem;max-width:500px;margin-left:auto;margin-right:auto">
+          Lade deine Fotos hoch, beschreibe deinen Stil – und erhalte personalisierte Outfit-Empfehlungen mit aktuellen Modetrends, abgestimmt auf deinen Typ und Anlass.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center">
+          <button class="btn-gold" style="font-size:1rem;padding:.9rem 2.5rem" onclick="startApp()">
+            ✦ Style-Profil erstellen
+          </button>
+          <button class="btn-outline" style="border-color:rgba(240,237,231,.2);color:#F0EDE7" onclick="showDemo()">
+            Beispiel ansehen →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div style="background:var(--bg);padding:4rem 1.5rem">
+      <div style="max-width:840px;margin:0 auto">
+        <h2 style="font-family:Georgia,serif;font-size:1.8rem;text-align:center;margin-bottom:3rem;font-weight:400">Wie es funktioniert</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2rem">
+          <div style="text-align:center;padding:1.5rem">
+            <div style="font-size:2.5rem;margin-bottom:1rem">📸</div>
+            <h3 style="font-weight:600;margin-bottom:.5rem">Fotos hochladen</h3>
+            <p style="font-size:.88rem;color:var(--sub);line-height:1.6">Lade bis zu 5 Bilder hoch – optional Ganzkörper, Oberkörper oder Details.</p>
+          </div>
+          <div style="text-align:center;padding:1.5rem">
+            <div style="font-size:2.5rem;margin-bottom:1rem">✏️</div>
+            <h3 style="font-weight:600;margin-bottom:.5rem">Profil ausfüllen</h3>
+            <p style="font-size:.88rem;color:var(--sub);line-height:1.6">Körpertyp, Stilvorlieben, Anlass, Saison, Budget – alles in wenigen Schritten.</p>
+          </div>
+          <div style="text-align:center;padding:1.5rem">
+            <div style="font-size:2.5rem;margin-bottom:1rem">🔍</div>
+            <h3 style="font-weight:600;margin-bottom:.5rem">Trends recherchiert</h3>
+            <p style="font-size:.88rem;color:var(--sub);line-height:1.6">Aktuelle Fashion-Weeks, Vogue, Highsnobiety – verlässlich und mit Quellenangabe.</p>
+          </div>
+          <div style="text-align:center;padding:1.5rem">
+            <div style="font-size:2.5rem;margin-bottom:1rem">✨</div>
+            <h3 style="font-weight:600;margin-bottom:.5rem">Looks erhalten</h3>
+            <p style="font-size:.88rem;color:var(--sub);line-height:1.6">Mehrere komplette Outfits mit Erklärung, Styling-Tipps und Produktvorschlägen.</p>
+          </div>
+        </div>
+
+        <!-- Privacy note -->
+        <div style="margin-top:3rem;padding:1.25rem 1.5rem;background:var(--bg2);border-radius:14px;display:flex;align-items:flex-start;gap:1rem;border:1px solid var(--border)">
+          <span style="font-size:1.2rem">🔒</span>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:.25rem">Datenschutz an erster Stelle</div>
+            <div style="font-size:.83rem;color:var(--sub);line-height:1.6">Deine Bilder werden ausschließlich für die stilistische Analyse verwendet und nach der Sitzung automatisch gelöscht – es sei denn, du stimmst einer Speicherung ausdrücklich zu. Keine biometrische Erkennung, keine Weitergabe an Dritte.</div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;margin-top:3rem">
+          <button class="btn-gold" style="font-size:1rem;padding:.9rem 2.5rem" onclick="startApp()">
+            Jetzt kostenlos starten →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: PROFILE (multi-step) ═══════════════════════ -->
+<section id="s-profile" class="screen" style="padding-top:64px">
+  <div style="max-width:680px;margin:0 auto;padding:2rem 1.25rem 6rem">
+
+    <!-- Step progress -->
+    <div style="margin-bottom:2rem">
+      <div class="progress-bar"><div class="progress-fill" id="profileProgressFill" style="width:25%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:.75rem">
+        <span style="font-size:.8rem;color:var(--sub)" id="profileStepLabel">Schritt 1 von 4 — Persönliche Angaben</span>
+        <span style="font-size:.8rem;color:var(--gold);font-weight:600" id="profileStepNum">1/4</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: Personal -->
+    <div class="form-page active" id="fp-1">
+      <h2 class="section-title">Persönliche Angaben</h2>
+      <p class="section-sub">Damit dein Stylist die besten Empfehlungen geben kann – alle Angaben sind freiwillig.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+        <div>
+          <label>Körpergröße (cm) *</label>
+          <input type="number" id="f-height" placeholder="z.B. 168" min="140" max="220">
+        </div>
+        <div>
+          <label>Alter (optional)</label>
+          <input type="number" id="f-age" placeholder="z.B. 29" min="16" max="99">
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Anrede / Geschlecht (optional)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+          <div class="chip" onclick="selectChip(this,'gender')">Sie / ihr</div>
+          <div class="chip" onclick="selectChip(this,'gender')">Er / ihm</div>
+          <div class="chip" onclick="selectChip(this,'gender')">They / them</div>
+          <div class="chip" onclick="selectChip(this,'gender')">Keine Angabe</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Körperstatur</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+          <div class="chip" onclick="selectChip(this,'stature')">Zierlich</div>
+          <div class="chip" onclick="selectChip(this,'stature')">Schlank</div>
+          <div class="chip" onclick="selectChip(this,'stature')">Athletisch</div>
+          <div class="chip" onclick="selectChip(this,'stature')">Durchschnittlich</div>
+          <div class="chip" onclick="selectChip(this,'stature')">Kräftig</div>
+          <div class="chip" onclick="selectChip(this,'stature')">Individuell</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Körperfigurtyp (optional)</label>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:.5rem">
+          <div class="chip-body" onclick="selectChip(this,'figure')">
+            <div style="font-size:1.6rem">🔺</div>
+            <div style="font-size:.8rem;margin-top:.25rem">A-Typ</div>
+          </div>
+          <div class="chip-body" onclick="selectChip(this,'figure')">
+            <div style="font-size:1.6rem">🔻</div>
+            <div style="font-size:.8rem;margin-top:.25rem">V-Typ</div>
+          </div>
+          <div class="chip-body" onclick="selectChip(this,'figure')">
+            <div style="font-size:1.6rem">⧖</div>
+            <div style="font-size:.8rem;margin-top:.25rem">X-Typ</div>
+          </div>
+          <div class="chip-body" onclick="selectChip(this,'figure')">
+            <div style="font-size:1.6rem">▬</div>
+            <div style="font-size:.8rem;margin-top:.25rem">H-Typ</div>
+          </div>
+          <div class="chip-body" onclick="selectChip(this,'figure')">
+            <div style="font-size:1.6rem">⭕</div>
+            <div style="font-size:.8rem;margin-top:.25rem">O-Typ</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+        <div>
+          <label>Farbtyp</label>
+          <select id="f-colortype">
+            <option value="">— wählen —</option>
+            <option>Frühling (warm, hell)</option>
+            <option>Sommer (kühl, gedämpft)</option>
+            <option>Herbst (warm, tief)</option>
+            <option>Winter (kühl, kontrastreich)</option>
+            <option>Noch unbekannt</option>
+          </select>
+        </div>
+        <div>
+          <label>Hautunterton (optional)</label>
+          <select id="f-skintone">
+            <option value="">— wählen —</option>
+            <option>Warm (goldene Ader)</option>
+            <option>Kühl (blaue/rosa Ader)</option>
+            <option>Neutral</option>
+            <option>Unbekannt</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.25rem">
+        <label>Bevorzugte Farben (tippe oder wähle)</label>
+        <input type="text" id="f-favcolors" placeholder="z.B. Beige, Navy, Olivgrün, Bordeaux …">
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem">
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#2C2C2C','#000')">⬤ Schwarz</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#F5F0E8','#333')">⬤ Creme</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#8B6F5E','#fff')">⬤ Camel</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#2C4A6B','#fff')">⬤ Navy</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#6B8E6B','#fff')">⬤ Olivgrün</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#8B2635','#fff')">⬤ Bordeaux</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#C4A882','#333')">⬤ Sand</span>
+          <span class="chip" style="font-size:.78rem" onclick="addColor(this,'fav','#D4B5C8','#333')">⬤ Rosa</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Farben vermeiden (optional)</label>
+        <input type="text" id="f-avoidcolors" placeholder="z.B. Neonfarben, Gelb, Lila …">
+      </div>
+    </div>
+
+    <!-- STEP 2: Style Preferences -->
+    <div class="form-page" id="fp-2">
+      <h2 class="section-title">Stilpräferenzen</h2>
+      <p class="section-sub">Wähle deinen Stil – Mehrfachauswahl möglich.</p>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Mein Stil (Mehrfachauswahl)</label>
+        <div id="styleChips" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+        <div>
+          <label>Lieblingsmarken</label>
+          <input type="text" id="f-brands" placeholder="z.B. Zara, COS, Arket …">
+        </div>
+        <div>
+          <label>Marken vermeiden</label>
+          <input type="text" id="f-avoidbrands" placeholder="z.B. Fast-Fashion-Ketten …">
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.25rem">
+        <label>Bevorzugte Passform</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+          <div class="chip" onclick="selectChip(this,'fit')">Figurbetonend</div>
+          <div class="chip" onclick="selectChip(this,'fit')">Regular Fit</div>
+          <div class="chip" onclick="selectChip(this,'fit')">Oversized</div>
+          <div class="chip" onclick="selectChip(this,'fit')">Relaxed / Fluid</div>
+          <div class="chip" onclick="selectChip(this,'fit')">Komfort-Fit</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.25rem">
+        <label>Bevorzugte Materialien</label>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+          <div class="chip" onclick="toggleChip(this,'material')">Baumwolle</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Leinen</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Wolle</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Seide</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Denim</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Leder</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Tencel / Modal</div>
+          <div class="chip" onclick="toggleChip(this,'material')">Recycelte Fasern</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.25rem">
+        <label>Budget pro Outfit</label>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <input type="range" id="f-budget" min="50" max="2000" step="50" value="300" oninput="updateBudget()" style="flex:1;border:none;background:transparent;padding:0;accent-color:var(--gold)">
+          <span id="budgetDisplay" style="font-weight:600;color:var(--gold);min-width:80px;text-align:right">300 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--sub);margin-top:.25rem">
+          <span>Günstig (50€+)</span><span>Mittel (300€+)</span><span>Premium (1000€+)</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.5rem">
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s" id="tog-secondhand" onclick="togglePref('secondhand')">
+          <div style="font-size:1.5rem">♻️</div>
+          <div style="font-size:.82rem;margin-top:.4rem;font-weight:500">Second Hand</div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s" id="tog-sustainable" onclick="togglePref('sustainable')">
+          <div style="font-size:1.5rem">🌿</div>
+          <div style="font-size:.82rem;margin-top:.4rem;font-weight:500">Nachhaltig</div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s" id="tog-vegan" onclick="togglePref('vegan')">
+          <div style="font-size:1.5rem">🐾</div>
+          <div style="font-size:.82rem;margin-top:.4rem;font-weight:500">Vegan</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Occasion -->
+    <div class="form-page" id="fp-3">
+      <h2 class="section-title">Anlass &amp; Kontext</h2>
+      <p class="section-sub">Für welche Situation suchst du Inspiration?</p>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Anlass (Mehrfachauswahl möglich)</label>
+        <div id="occasionChips" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem"></div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Jahreszeit</label>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:.5rem">
+          <div class="chip-body" onclick="selectChip(this,'season')"><div>🌸</div><div style="font-size:.78rem;margin-top:.2rem">Frühling</div></div>
+          <div class="chip-body" onclick="selectChip(this,'season')"><div>☀️</div><div style="font-size:.78rem;margin-top:.2rem">Sommer</div></div>
+          <div class="chip-body" onclick="selectChip(this,'season')"><div>🍂</div><div style="font-size:.78rem;margin-top:.2rem">Herbst</div></div>
+          <div class="chip-body" onclick="selectChip(this,'season')"><div>❄️</div><div style="font-size:.78rem;margin-top:.2rem">Winter</div></div>
+          <div class="chip-body" onclick="selectChip(this,'season')"><div>🌤️</div><div style="font-size:.78rem;margin-top:.2rem">Übergang</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+        <div>
+          <label>Land / Stadt (optional)</label>
+          <input type="text" id="f-location" placeholder="z.B. Berlin, Paris, NYC …">
+        </div>
+        <div>
+          <label>Temperatur / Wetter</label>
+          <select id="f-weather">
+            <option value="">— wählen —</option>
+            <option>Sehr warm (25°C+)</option>
+            <option>Warm (18–25°C)</option>
+            <option>Mild (10–18°C)</option>
+            <option>Kühl (5–10°C)</option>
+            <option>Kalt (unter 5°C)</option>
+            <option>Regen / wechselhaft</option>
+            <option>Schnee / Eis</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+        <div>
+          <label>Dresscode (optional)</label>
+          <select id="f-dresscode">
+            <option value="">— kein spezieller —</option>
+            <option>Smart Casual</option>
+            <option>Business Casual</option>
+            <option>Business Formal</option>
+            <option>Black Tie</option>
+            <option>White Tie</option>
+            <option>Cocktail</option>
+            <option>Beach / Resort</option>
+          </select>
+        </div>
+        <div>
+          <label>Anzahl Looks</label>
+          <select id="f-lookcount">
+            <option value="1">1 Look</option>
+            <option value="2">2 Looks</option>
+            <option value="3" selected>3 Looks</option>
+            <option value="5">5 Looks</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label>Bereits vorhandene Kleidungsstücke (optional)</label>
+        <textarea id="f-existing" rows="3" placeholder="z.B. „Habe eine gute dunkelblaue Jeans, einen beigen Trenchcoat und weiße Sneaker"" style="resize:vertical"></textarea>
+      </div>
+    </div>
+
+    <!-- STEP 4: Upload -->
+    <div class="form-page" id="fp-4">
+      <h2 class="section-title">Fotos hochladen</h2>
+      <p class="section-sub">Optional – die KI arbeitet auch ohne Bilder ausschließlich mit deinen Angaben.</p>
+
+      <div class="upload-zone" id="uploadZone" onclick="triggerUpload()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">📷</div>
+        <div style="font-weight:600;margin-bottom:.4rem">Fotos hochladen</div>
+        <div style="font-size:.85rem;color:var(--sub)">JPG, PNG, WEBP – max. 10 MB je Bild – bis zu 5 Fotos</div>
+        <div style="margin-top:1rem"><button class="btn-outline" onclick="event.stopPropagation();triggerUpload()">Dateien wählen</button></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/webp" multiple style="display:none" onchange="handleFiles(this.files)">
+
+      <div id="imagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem;margin-top:1rem"></div>
+
+      <div style="margin-top:1.25rem;padding:1rem 1.25rem;background:var(--bg2);border-radius:12px;font-size:.83rem;color:var(--sub);line-height:1.7;border:1px solid var(--border)">
+        💡 <strong style="color:var(--text)">Tipps für beste Ergebnisse:</strong> Gute Beleuchtung, neutraler Hintergrund, vollständige Outfit-Sicht. Ganzkörperfotos helfen besonders bei Proportionsempfehlungen.
+      </div>
+
+      <div style="margin-top:1rem;padding:1rem 1.25rem;background:var(--bg2);border-radius:12px;font-size:.83rem;color:var(--sub);line-height:1.7;border:1px solid var(--border)">
+        🔒 <strong style="color:var(--text)">Datenschutz:</strong> Bilder werden ausschließlich für die stilistische Analyse verarbeitet. Keine biometrische Identifikation, keine Identitätsableitung, keine dauerhafte Speicherung ohne deine Zustimmung.
+      </div>
+
+      <!-- GDPR consent -->
+      <label style="display:flex;align-items:flex-start;gap:.75rem;margin-top:1.25rem;cursor:pointer;color:var(--text)">
+        <input type="checkbox" id="gdprConsent" style="width:auto;margin-top:.15rem;accent-color:var(--gold)">
+        <span style="font-size:.85rem;line-height:1.6">Ich habe die <span style="color:var(--gold);text-decoration:underline;cursor:pointer">Datenschutzerklärung</span> gelesen und stimme der temporären Verarbeitung meiner Daten zu Beratungszwecken zu.</span>
+      </label>
+    </div>
+
+    <!-- Step navigation -->
+    <div style="position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;z-index:40">
+      <button class="btn-outline" id="btnBack" onclick="goStep(-1)" style="display:none">← Zurück</button>
+      <div style="flex:1"></div>
+      <button class="btn-gold" id="btnNext" onclick="goStep(1)">Weiter →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: LOADING ═══════════════════════ -->
+<section id="s-loading" class="screen" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+  <div class="loading-ring" style="margin-bottom:2rem"></div>
+  <h2 style="font-family:Georgia,serif;font-size:1.8rem;font-weight:400;margin-bottom:.75rem">Dein Stylist arbeitet …</h2>
+  <p id="loadingMsg" style="color:var(--sub);font-size:.95rem;line-height:1.6;max-width:400px">Analysiere dein Stil-Profil …</p>
+  <div style="margin-top:2rem;max-width:360px;width:100%">
+    <div class="progress-bar"><div class="progress-fill" id="loadingBar" style="width:5%"></div></div>
+  </div>
+  <div style="margin-top:3rem;display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;max-width:500px">
+    <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">🔍 Vogue – verifiziert</span>
+    <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">✓ Paris Fashion Week SS25</span>
+    <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">✓ Messen aktuelle Trends</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: RESULTS ═══════════════════════ -->
+<section id="s-results" class="screen" style="padding-top:64px">
+  <div style="max-width:900px;margin:0 auto;padding:2rem 1.25rem 4rem">
+    <div style="margin-bottom:2rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <h1 class="section-title">Deine Looks</h1>
+          <p style="font-size:.88rem;color:var(--sub)">3 personalisierte Outfits · Trends geprüft Aug. 2025 · Quellenangaben weiter unten</p>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn-outline" style="font-size:.83rem;padding:.5rem 1rem" onclick="showScreen('s-profile')">⟳ Anpassen</button>
+          <button class="btn-gold" style="font-size:.83rem;padding:.5rem 1rem" onclick="showScreen('s-chat')">💬 Mit Stylist chatten</button>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div style="display:flex;gap:.5rem;overflow-x:auto;padding:.75rem 0;margin-top:.75rem">
+        <div class="chip selected" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'all')">Alle Looks</div>
+        <div class="chip" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'casual')">Casual</div>
+        <div class="chip" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'business')">Business</div>
+        <div class="chip" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'evening')">Abend</div>
+        <div class="chip" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'sustainable')">🌿 Nachhaltig</div>
+        <div class="chip" style="font-size:.8rem;white-space:nowrap" onclick="filterResults(this,'budget')">💰 Budget-freundlich</div>
+      </div>
+    </div>
+
+    <!-- Look cards -->
+    <div id="lookGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.5rem"></div>
+
+    <!-- Trend sources -->
+    <div style="margin-top:3rem;padding:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:16px">
+      <h3 style="font-size:.95rem;font-weight:600;margin-bottom:1rem">📚 Verwendete Quellen &amp; Trends (Aug. 2025)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.75rem">
+        <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Vogue International, "Colors of Fall 2025", 15. Jul. 2025</a>
+        <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Paris Fashion Week SS26 Bericht, Aug. 2025</a>
+        <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Highsnobiety "Minimal Luxe Trend Report", Jun. 2025</a>
+        <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Elle Germany, "Herbst-Capsule-Wardrobe", Aug. 2025</a>
+      </div>
+      <div style="margin-top:1rem;font-size:.78rem;color:var(--sub)">⚠️ Produktpreise können abweichen. Alle Preisangaben sind Richtwerte ohne Gewähr. Keine Affiliate-Links in dieser Demo-Version.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: LOOK DETAIL ═══════════════════════ -->
+<section id="s-detail" class="screen" style="padding-top:64px">
+  <div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 4rem">
+    <button class="btn-outline" onclick="showScreen('s-results')" style="margin-bottom:1.5rem">← Alle Looks</button>
+    <div id="detailContent"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: CHAT ═══════════════════════ -->
+<section id="s-chat" class="screen" style="padding-top:64px;display:flex;flex-direction:column;height:100vh">
+  <div style="max-width:680px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column;padding:0 1.25rem">
+    <div style="padding:1.25rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#472C45,#795A71,#CF9775);display:flex;align-items:center;justify-content:center;font-size:1.3rem">✦</div>
+        <div>
+          <div style="font-weight:600">KI-Stylist</div>
+          <div style="font-size:.8rem;color:var(--green)">● Online</div>
+        </div>
+        <button class="btn-outline" style="margin-left:auto;font-size:.8rem;padding:.4rem .9rem" onclick="showScreen('s-results')">← Zurück zu Looks</button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="chatMessages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1rem;padding-bottom:1rem"></div>
+
+    <!-- Quick actions -->
+    <div style="display:flex;gap:.5rem;overflow-x:auto;padding:.75rem 0">
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Mach Look 1 bürotauglicher')">🏢 Bürotauglich</button>
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Günstiger machen')">💰 Günstiger</button>
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Eleganter gestalten')">✨ Eleganter</button>
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Für Reise nach Paris')">🗼 Paris-Trip</button>
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Wintervariante zeigen')">❄️ Winterlook</button>
+      <button class="chip" style="font-size:.78rem;white-space:nowrap" onclick="sendQuick('Nur nachhaltige Alternativen')">🌿 Nachhaltiger</button>
+    </div>
+
+    <!-- Input -->
+    <div style="padding:1rem 0 1.5rem;display:flex;gap:.75rem;align-items:flex-end">
+      <textarea id="chatInput" rows="1" placeholder="Schreibe deinem Stylisten …"
+        style="flex:1;resize:none;border-radius:14px;padding:.75rem 1rem;min-height:46px;max-height:120px;overflow-y:auto"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="btn-gold" style="padding:.75rem 1.1rem;flex-shrink:0;border-radius:14px" onclick="sendChat()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SCREEN: SAVED ═══════════════════════ -->
+<section id="s-saved" class="screen" style="padding-top:64px">
+  <div style="max-width:900px;margin:0 auto;padding:2rem 1.25rem 4rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem">
+      <div>
+        <h1 class="section-title">Gespeicherte Looks</h1>
+        <p class="section-sub">Deine Favoriten auf einen Blick.</p>
+      </div>
+      <button class="btn-outline" style="font-size:.85rem" onclick="showScreen('s-results')">← Zu den Looks</button>
+    </div>
+    <div id="savedGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.5rem"></div>
+    <div id="savedEmpty" style="text-align:center;padding:4rem 2rem;color:var(--sub)">
+      <div style="font-size:3rem;margin-bottom:1rem">🤍</div>
+      <div style="font-weight:600;margin-bottom:.5rem">Noch keine gespeicherten Looks</div>
+      <div style="font-size:.88rem;margin-bottom:1.5rem">Klicke auf das Herz-Icon bei einem Look, um ihn zu speichern.</div>
+      <button class="btn-gold" onclick="showScreen('s-results')">Looks entdecken</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
+<script>
+// ─── APP STATE ───────────────────────────────────────────────
+const app = {
+  isDark: false,
+  currentStep: 1,
+  totalSteps: 4,
+  uploadedImages: [],
+  savedLooks: new Set(),
+  chatMessages: [],
+  formData: {}
+};
+
+// ─── MOCK DATA ───────────────────────────────────────────────
+const mockLooks = [
+  {
+    id: 1,
+    name: "Le Parisien",
+    tagline: "Elegante Leichtigkeit mit zeitlosem Flair",
+    occasion: "Alltag · Brunch · City",
+    season: "Frühling / Sommer",
+    weather: "18–25°C",
+    style: "Minimal-Chic",
+    budget: "280–420 €",
+    budgetTier: "mittel",
+    trendfactor: 9,
+    wearability: 10,
+    sustainability: 7,
+    colors: ["#2C2A26","#F2ECD8","#A8917C","#8B6F5E","#D4C8B4"],
+    colorNames: ["Graphit","Ivory","Camel","Terracotta","Sand"],
+    gradient: "linear-gradient(145deg,#D2C0C2 0%,#8CB6A5 45%,#795A71 100%)",
+    items: {
+      top:     "Ivory-weißes Leinenhemd, oversized, leicht strukturiert (z.B. Arket, ~79 €)",
+      bottom:  "Hellbeige Woll-Weithose, hohe Taille, fließend (z.B. COS, ~120 €)",
+      shoes:   "Beige Leder-Loafer mit goldfarbener Schließe (z.B. Mango, ~89 €)",
+      bag:     "Mini-Tote aus naturellem Leder, strukturiert (z.B. &Other Stories, ~75 €)",
+      jewelry: "Feine Goldkette, Knopf-Ohrringe in Mattigold",
+      outerwear: "Camel-farbener Trenchcoat, klassisch, kniebedeckend"
+    },
+    why: "Die warme Farbpalette aus Ivory, Camel und Sand harmoniert hervorragend mit einem Herbst- oder Frühlings-Farbtyp. Die fließende Weithose schafft eine elegante, ausgewogene Silhouette. Der Trenchcoat unterstreicht auf Wunsch die vertikale Linie.",
+    tips: [
+      "Hemdsaum locker lassen oder leicht ins Hosenbund einstecken – je nach Stimmung.",
+      "Mantel offen tragen für einen lässigen Look, geschlossen für mehr Struktur.",
+      "Abendvariante: Goldschmuck hinzufügen, Loafer gegen Mules tauschen, Tasche mit Kettenriemen."
+    ],
+    sources: ["Vogue Paris, „Minimal Luxe für 2025", Jul. 2025","Paris Fashion Week Streetstyle, Jun. 2025"],
+    tags: ["casual","minimal"]
+  },
+  {
+    id: 2,
+    name: "Metropolitan Edge",
+    tagline: "Selbstbewusstes Business-Outfit mit modernem Charakter",
+    occasion: "Business · Meeting · Vorstellungsgespräch",
+    season: "Herbst / Übergangszeit",
+    weather: "10–18°C",
+    style: "Modern Business",
+    budget: "380–580 €",
+    budgetTier: "premium",
+    trendfactor: 8,
+    wearability: 9,
+    sustainability: 8,
+    colors: ["#1A1A1A","#2C4A6B","#8A9BAF","#E8E4DC","#C8B898"],
+    colorNames: ["Schwarz","Navy","Stahlblau","Creme","Taupe"],
+    gradient: "linear-gradient(145deg,#472C45 0%,#795A71 50%,#8CB6A5 100%)",
+    items: {
+      top:     "Marineblaue Seidenbluse, strukturierter Kragen (z.B. Massimo Dutti, ~150 €)",
+      bottom:  "Schwarze High-Waist-Anzughose, leicht weites Bein (z.B. Zara, ~80 €)",
+      shoes:   "Schwarze Leder-Pumps, 6 cm Absatz (z.B. ALDO, ~120 €)",
+      bag:     "Strukturierte schwarze Leder-Handtasche, Goldverschluss (z.B. Boss, ~210 €)",
+      jewelry: "Perlenohrringe, dezentes Goldarmband",
+      outerwear: "Nachtblauer Wollmantel, tailliert, kniebedeckend"
+    },
+    why: "Dunkle, klare Farben signalisieren Kompetenz und Entschlossenheit. Das weite Hosenbein schafft eine schlanke Vertikale, die je nach Körperproportionen den Gesamteindruck harmonisch ausbalanciert. Hochwertige Materialien unterstreichen Professionalität.",
+    tips: [
+      "Bluse in die Hose tucken für eine definierte Taille.",
+      "Blazer-Alternative: Navy-Wollblazer statt Mantel für formellere Anlässe.",
+      "Casual-Variante: Jeans gegen Anzughose tauschen, Pumps durch flache Loafer ersetzen."
+    ],
+    sources: ["Elle Germany, „Business-Looks Herbst 2025", Aug. 2025","GQ Deutschland, „Power Dressing neu gedacht""],
+    tags: ["business","elegant"]
+  },
+  {
+    id: 3,
+    name: "Sunlit Weekend",
+    tagline: "Entspannter Look für sonnige Tage voller Energie",
+    occasion: "Wochenende · Festival · Urlaub",
+    season: "Sommer",
+    weather: "22°C+",
+    style: "Casual Boho",
+    budget: "150–280 €",
+    budgetTier: "günstig",
+    trendfactor: 10,
+    wearability: 10,
+    sustainability: 9,
+    colors: ["#D4956A","#F5E6CC","#8B9B6B","#C4DDD4","#E8C89A"],
+    colorNames: ["Terrakotta","Vanille","Olivgrün","Mintgrün","Apricot"],
+    gradient: "linear-gradient(145deg,#CF9775 0%,#D2C0C2 50%,#8CB6A5 100%)",
+    items: {
+      top:     "Terrakottafarbenes Leinentop, leichter Rüschen-Ausschnitt (z.B. Zara, ~30 €)",
+      bottom:  "Weites mintgrünes Leinenhemd-Kleid oder weite Sommerlinosehose (z.B. H&M, ~35 €)",
+      shoes:   "Naturledersandalen, flach, geflochten (z.B. Birkenstock, ~95 €)",
+      bag:     "Rattan-Korbtasche mit Lederdetails (z.B. Mango, ~49 €)",
+      jewelry: "Chunky Gold-Armbänder, Shell-Ohrringe",
+      outerwear: "Leichte creme-weiße Leinenjacke (optional für Abende)"
+    },
+    why: "Warme Erdtöne kombiniert mit frischen Mintakzenten erzeugen eine lebendige, aber harmonische Farbpalette. Fließende Materialien wie Leinen unterstützen ein komfortables Tragegefühl bei Wärme. Der Look folgt dem aktuellen Boho-Trend, der laut Highsnobiety und Vogue auch 2025 dominant bleibt.",
+    tips: [
+      "Layering: Am Abend Leinenjacke und Metallic-Sandalen ergänzen.",
+      "Hair: Loose Beach Waves oder hohes Bun mit Haarspange.",
+      "Für den Strand: Baumwoll-Pareo als Überrock oder Schal verwenden."
+    ],
+    sources: ["Highsnobiety, „Boho is Back – Summer 2025 Trend Report"","Vogue, „Earthtones dominate Festival Season""],
+    tags: ["casual","sustainable","boho"]
+  }
+];
+
+const occasionOptions = [
+  "Alltag","Büro","Business-Meeting","Vorstellungsgespräch","Hochzeit","Party",
+  "Date","Urlaub","Festival","Sport","Abendveranstaltung","Reise","Brunch","Dinner"
+];
+const styleOptions = [
+  "Elegant","Casual","Sportlich","Business","Minimalistisch","Extravagant",
+  "Feminin","Maskulin","Androgyn","Streetwear","Boho","Vintage","Klassisch",
+  "Modern","Edgy","Romantisch","Nachhaltig","Individuell"
+];
+const chatResponses = {
+  "bürotauglich": "Kein Problem! Ich adaptiere Look 1 für dein Büro:\n\n**Look 1 – Büro-Edition:**\n• Tausche die Weithose gegen eine tailliertere Anzughose in Hellgrau\n• Ergänze einen strukturierten Blazer in Camel oder Off-White\n• Loafer durch Leder-Kitten-Heels oder elegante Ballerinas ersetzen\n• Handtasche: Strukturierte Tote statt Mini-Bag\n\nDiese Kombination bleibt deinem minimalistischen Stil treu und wirkt gleichzeitig professionell und gepflegt.",
+  "günstiger": "Natürlich! Hier sind Budget-Alternativen für Look 1 (Gesamtbudget: ca. 130 €):\n\n• **Leinenhemd:** H&M oder Primark (~20 €)\n• **Weithose:** Zara oder Shein (~30 €)\n• **Loafer:** ASOS oder Deichmann (~45 €)\n• **Tasche:** Primark oder Second Hand (Vinted, ~15 €)\n\n💡 *Second-Hand-Tipp:* Besonders Trenchcoats und Blazer findest du auf Vinted oder in Vintage-Shops zu einem Bruchteil des Preises – oft in top Qualität.",
+  "eleganter": "Für einen eleganteren Look empfehle ich folgende Upgrades:\n\n• **Materialwechsel:** Leinenhemd → Seidenbluse in Ivory oder Pearl\n• **Schmuck:** Minimalistische Goldkette → Statement-Halskette oder Perlen\n• **Schuhe:** Loafer → Leder-Mules mit kleinem Absatz\n• **Tasche:** Mini-Tote → Strukturierte Clutch oder Raffia-Evening-Bag\n\nDie Basis bleibt dieselbe – durch feinere Materialien und accessories wirkt der Look sofort festlicher.",
+  "paris": "Perfekt für einen Paris-Trip! Ich stelle dir eine 3-Look-Reise-Capsule zusammen:\n\n**Look A – Ankunft / Flanieren:** Le Parisien (Look 1) – zeitlos und authentisch\n**Look B – Museums & Cafés:** Metropolitan Edge in entspannterer Version – Anzughose + lässige Bluse + Trenchcoat\n**Look C – Abendessen:** Sunlit Weekend + elegantere Accessoires + Heels\n\nDazu empfehle ich: 1 gute Handtasche die zu allem passt (nude oder schwarz), Trenchcoat als verbindendes Element, Komfort-Schuhe für Pflastersteinstraßen.",
+  "winter": "Wintervariante für Look 3 – Sunlit Weekend:\n\n• **Basis:** Statt Leinentop ein kuscheliges Terrakotta-Strickoberteil\n• **Unten:** Dicke Wollsocken + Stiefel (Chelsea oder Kniehohe) statt Sandalen\n• **Schicht 1:** Senfgelbes oder olivgrünes Turtleneck unter der Leinenjacke\n• **Outerwear:** Warmer Wollmantel in Camel oder einem Braunton\n• **Accessoires:** Woll-Beret, Lederschuhe, strukturierte Tasche\n\nDie warme Farbpalette macht diesen Look zum perfekten Herbst-Winter-Boho-Ensemble!",
+  "nachhaltig": "Sehr gerne! Hier sind nachhaltigere Alternativen für alle drei Looks:\n\n**Nachhaltige Marken-Empfehlungen:**\n• **Armedangels** – GOTS-zertifizierte Bio-Baumwolle (Basics & Kleider)\n• **Thinking Mu** – Leinenmode aus zertifizierten Quellen\n• **Patagonia** – Recycelte Materialien, Reparatur-Programm\n• **Veja** – Nachhaltige Sneaker aus Amazônia-Kautschuk\n• **Vinted / Depop** – Second Hand für Designerstücke\n\n💚 Second-Hand-Tipp: Besonders Mäntel, Blazer und Handtaschen lohnen sich gebraucht zu kaufen – oft günstiger und weniger Ressourcenverbrauch.",
+  "default": "Natürlich helfe ich dir weiter! Magst du mir etwas mehr Details geben? Zum Beispiel:\n• Welchen Look möchtest du anpassen?\n• Was soll sich genau ändern (Farbe, Anlass, Budget)?\n• Gibt es bestimmte Kleidungsstücke die du bereits hast?\n\nIch bin für dich da – lass uns gemeinsam den perfekten Look entwickeln! ✦"
+};
+
+// ─── SCREEN MANAGEMENT ───────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const nav = document.getElementById('mainNav');
+  const progress = document.getElementById('navProgress');
+  if (id === 's-landing') {
+    nav.style.display = 'none';
+  } else {
+    nav.style.display = 'block';
+    progress.style.display = (id === 's-profile') ? 'block' : 'none';
+  }
+  window.scrollTo(0,0);
+}
+
+function startApp() {
+  showScreen('s-profile');
+  goToStep(1);
+}
+
+function showDemo() {
+  simulateAnalysis();
+}
+
+// ─── PROFILE STEPS ───────────────────────────────────────────
+function goToStep(n) {
+  app.currentStep = n;
+  document.querySelectorAll('.form-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('fp-' + n).classList.add('active');
+  const pct = (n / app.totalSteps) * 100;
+  document.getElementById('profileProgressFill').style.width = pct + '%';
+  document.getElementById('navProgressFill').style.width = pct + '%';
+  const labels = ['Persönliche Angaben','Stilpräferenzen','Anlass & Kontext','Fotos hochladen'];
+  document.getElementById('profileStepLabel').textContent = `Schritt ${n} von 4 — ${labels[n-1]}`;
+  document.getElementById('navProgressLabel').textContent = `Schritt ${n} von 4`;
+  document.getElementById('profileStepNum').textContent = `${n}/4`;
+  document.getElementById('btnBack').style.display = (n > 1) ? 'inline-flex' : 'none';
+  document.getElementById('btnNext').textContent = (n === 4) ? '✦ Looks generieren' : 'Weiter →';
+}
+
+function goStep(dir) {
+  if (dir === 1 && app.currentStep < app.totalSteps) {
+    goToStep(app.currentStep + 1);
+  } else if (dir === -1 && app.currentStep > 1) {
+    goToStep(app.currentStep - 1);
+  } else if (dir === 1 && app.currentStep === app.totalSteps) {
+    // Validate GDPR
+    if (!document.getElementById('gdprConsent').checked) {
+      showToast('Bitte stimme der Datenschutzerklärung zu.');
+      return;
+    }
+    simulateAnalysis();
+  }
+}
+
+// ─── CHIP SELECTION ──────────────────────────────────────────
+function selectChip(el, group) {
+  document.querySelectorAll(`[onclick*="'${group}'"]`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleChip(el) {
+  el.classList.toggle('selected');
+}
+function addColor(el) { el.classList.toggle('selected'); }
+
+function togglePref(key) {
+  const el = document.getElementById('tog-' + key);
+  const isActive = el.style.borderColor === 'var(--gold)';
+  el.style.borderColor = isActive ? 'var(--border)' : 'var(--gold)';
+  el.style.background   = isActive ? 'var(--card)' : 'rgba(184,148,44,.08)';
+}
+
+// ─── BUDGET SLIDER ───────────────────────────────────────────
+function updateBudget() {
+  const v = document.getElementById('f-budget').value;
+  document.getElementById('budgetDisplay').textContent = v + ' €';
+}
+
+// ─── POPULATE CHIPS ──────────────────────────────────────────
+(function initChips() {
+  const sc = document.getElementById('styleChips');
+  styleOptions.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'chip';
+    d.textContent = s;
+    d.onclick = () => d.classList.toggle('selected');
+    sc.appendChild(d);
+  });
+  const oc = document.getElementById('occasionChips');
+  occasionOptions.forEach(o => {
+    const d = document.createElement('div');
+    d.className = 'chip';
+    d.textContent = o;
+    d.onclick = () => d.classList.toggle('selected');
+    oc.appendChild(d);
+  });
+})();
+
+// ─── IMAGE UPLOAD ────────────────────────────────────────────
+function triggerUpload() { document.getElementById('fileInput').click(); }
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (app.uploadedImages.length >= 5) { showToast('Maximal 5 Bilder erlaubt.'); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast(`"${file.name}" ist zu groß (max. 10 MB).`); return; }
+    if (!['image/jpeg','image/jpg','image/png','image/webp'].includes(file.type)) {
+      showToast('Nicht unterstütztes Format. Bitte JPG, PNG oder WEBP.'); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => addImagePreview(e.target.result, file.name);
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  handleFiles(event.dataTransfer.files);
+}
+
+function addImagePreview(src, name) {
+  const id = Date.now() + Math.random();
+  app.uploadedImages.push({ id, src, name });
+  renderPreviews();
+}
+
+function removeImage(id) {
+  app.uploadedImages = app.uploadedImages.filter(i => i.id !== id);
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('imagePreviewGrid');
+  grid.innerHTML = '';
+  app.uploadedImages.forEach(img => {
+    const card = document.createElement('div');
+    card.style.cssText = 'position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1;border:1px solid var(--border)';
+    card.innerHTML = `
+      <img src="${img.src}" alt="${img.name}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeImage(${img.id})" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:26px;height:26px;color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:.35rem .5rem;background:linear-gradient(transparent,rgba(0,0,0,.5));font-size:.7rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${img.name}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ─── ANALYSIS SIMULATION ─────────────────────────────────────
+function simulateAnalysis() {
+  showScreen('s-loading');
+  const messages = [
+    'Analysiere dein Stil-Profil …',
+    'Recherchiere aktuelle Modetrends (Vogue, Elle, Highsnobiety) …',
+    'Überprüfe Fashion Week Berichte SS/AW 2025 …',
+    'Vergleiche saisonale Farben und Schnitte …',
+    'Erstelle personalisierte Looks für deinen Typen …',
+    'Füge Styling-Tipps und Quellen hinzu …',
+    'Finaler Check: Inklusivität und Respekt sichergestellt ✓',
+    'Deine Looks sind fertig!'
+  ];
+  let i = 0;
+  const bar = document.getElementById('loadingBar');
+  const msg = document.getElementById('loadingMsg');
+  const interval = setInterval(() => {
+    if (i < messages.length) {
+      msg.textContent = messages[i];
+      bar.style.width = ((i+1)/messages.length*100) + '%';
+      i++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => {
+        renderResults();
+        showScreen('s-results');
+        initChat();
+      }, 500);
+    }
+  }, 600);
+}
+
+// ─── RESULTS ─────────────────────────────────────────────────
+function renderResults() {
+  const grid = document.getElementById('lookGrid');
+  grid.innerHTML = '';
+  mockLooks.forEach(look => {
+    const saved = app.savedLooks.has(look.id);
+    const card = document.createElement('div');
+    card.className = 'look-card';
+    card.setAttribute('data-tags', look.tags.join(','));
+    card.innerHTML = `
+      <!-- Gradient moodboard -->
+      <div style="height:200px;background:${look.gradient};position:relative">
+        <div style="position:absolute;inset:0;padding:1.25rem;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <span class="tag-badge" style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);color:#fff;font-size:.75rem">${look.style}</span>
+            <button onclick="event.stopPropagation();toggleSave(${look.id},this)" style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:background .2s">
+              ${saved ? '❤️' : '🤍'}
+            </button>
+          </div>
+          <div>
+            <div style="display:flex;gap:.35rem;margin-bottom:.5rem">
+              ${look.colors.map((c,i) => `<div style="width:20px;height:20px;border-radius:50%;background:${c};border:2px solid rgba(255,255,255,.4)" title="${look.colorNames[i]}"></div>`).join('')}
+            </div>
+            <div style="font-family:Georgia,serif;font-size:1.4rem;color:#fff;font-weight:400;text-shadow:0 1px 8px rgba(0,0,0,.3)">${look.name}</div>
+          </div>
+        </div>
+      </div>
+      <!-- Card body -->
+      <div style="padding:1.25rem" onclick="openDetail(${look.id})">
+        <p style="font-size:.83rem;color:var(--sub);margin-bottom:.75rem;line-height:1.5">${look.tagline}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+          <span class="tag-badge" style="background:var(--bg2);color:var(--sub);font-size:.76rem">📅 ${look.occasion}</span>
+          <span class="tag-badge" style="background:var(--bg2);color:var(--sub);font-size:.76rem">🌤️ ${look.weather}</span>
+          <span class="tag-badge" style="background:var(--bg2);color:var(--sub);font-size:.76rem">💶 ${look.budget}</span>
+        </div>
+        <!-- Ratings -->
+        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
+          ${[['Trendfaktor',look.trendfactor,'var(--gold)'],['Tragbarkeit',look.wearability,'var(--green)'],['Nachhaltigkeit',look.sustainability,'var(--green)']].map(([label,val,color]) => `
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <span style="font-size:.75rem;color:var(--sub);min-width:90px">${label}</span>
+              <div class="rating-bar"><div class="rating-fill" style="width:${val*10}%;background:${color}"></div></div>
+              <span style="font-size:.75rem;font-weight:600;min-width:24px">${val}/10</span>
+            </div>`).join('')}
+        </div>
+        <!-- Actions -->
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn-gold" style="font-size:.78rem;padding:.45rem .9rem;flex:1" onclick="event.stopPropagation();openDetail(${look.id})">Details →</button>
+          <button class="btn-outline" style="font-size:.78rem;padding:.45rem .75rem" onclick="event.stopPropagation();quickModify(${look.id},'cheaper')" title="Günstiger">💰</button>
+          <button class="btn-outline" style="font-size:.78rem;padding:.45rem .75rem" onclick="event.stopPropagation();quickModify(${look.id},'elegant')" title="Eleganter">✨</button>
+          <button class="btn-outline" style="font-size:.78rem;padding:.45rem .75rem" onclick="event.stopPropagation();showScreen('s-chat')" title="Im Chat bearbeiten">💬</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function filterResults(btn, tag) {
+  document.querySelectorAll('#s-results .chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.querySelectorAll('.look-card').forEach(card => {
+    if (tag === 'all') { card.style.display = ''; return; }
+    const tags = card.getAttribute('data-tags') || '';
+    card.style.display = tags.includes(tag) ? '' : 'none';
+  });
+}
+
+// ─── LOOK DETAIL ─────────────────────────────────────────────
+function openDetail(id) {
+  const look = mockLooks.find(l => l.id === id);
+  if (!look) return;
+  const saved = app.savedLooks.has(id);
+  document.getElementById('detailContent').innerHTML = `
+    <!-- Moodboard -->
+    <div style="height:280px;background:${look.gradient};border-radius:20px;margin-bottom:2rem;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;padding:2rem;display:flex;flex-direction:column;justify-content:flex-end">
+        <div style="font-family:Georgia,serif;font-size:2rem;color:#fff;font-weight:400;text-shadow:0 2px 12px rgba(0,0,0,.3)">${look.name}</div>
+        <div style="color:rgba(255,255,255,.8);font-size:.9rem;margin-top:.3rem">${look.tagline}</div>
+      </div>
+      <div style="position:absolute;top:1.25rem;right:1.25rem;display:flex;gap:.6rem">
+        <button onclick="toggleSave(${id},this)" class="icon-btn" style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);border-radius:999px;padding:.5rem 1rem;color:#fff;font-size:.85rem;font-weight:500;border:none;cursor:pointer">
+          ${saved ? '❤️ Gespeichert' : '🤍 Speichern'}
+        </button>
+        <button onclick="shareMsg()" class="icon-btn" style="background:rgba(255,255,255,.15);backdrop-filter:blur(6px);border-radius:999px;padding:.5rem 1rem;color:#fff;font-size:.85rem;font-weight:500;border:none;cursor:pointer">
+          ↗️ Teilen
+        </button>
+      </div>
+    </div>
+
+    <!-- Meta badges -->
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem">
+      <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">📅 ${look.occasion}</span>
+      <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">🌸 ${look.season}</span>
+      <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">🌡️ ${look.weather}</span>
+      <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">💶 ${look.budget}</span>
+      <span class="tag-badge" style="background:var(--bg2);color:var(--sub)">✦ ${look.style}</span>
+    </div>
+
+    <!-- Colors -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:1rem">Farbpalette</h3>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        ${look.colors.map((c,i) => `
+          <div style="text-align:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:${c};border:2px solid var(--border);margin:0 auto .3rem"></div>
+            <div style="font-size:.72rem;color:var(--sub)">${look.colorNames[i]}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Outfit items -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:1rem">Das komplette Outfit</h3>
+      <div style="display:flex;flex-direction:column;gap:.85rem">
+        ${Object.entries({
+          '👕 Oberteil': look.items.top,
+          '👗 Unterteil/Kleid': look.items.bottom,
+          '🧥 Jacke/Mantel': look.items.outerwear,
+          '👟 Schuhe': look.items.shoes,
+          '👜 Tasche': look.items.bag,
+          '💍 Schmuck': look.items.jewelry
+        }).map(([label, val]) => `
+          <div style="display:flex;gap:1rem;align-items:flex-start">
+            <span style="font-size:1rem;width:28px;flex-shrink:0">${label.split(' ')[0]}</span>
+            <div>
+              <div style="font-size:.78rem;font-weight:600;color:var(--sub);margin-bottom:.15rem">${label.slice(3)}</div>
+              <div style="font-size:.88rem;line-height:1.5">${val}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Why it fits -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem;border-left:3px solid var(--gold)">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:.75rem">✦ Warum dieser Look zu dir passt</h3>
+      <p style="font-size:.88rem;line-height:1.7;color:var(--text)">${look.why}</p>
+    </div>
+
+    <!-- Tips -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:.75rem">💡 Styling-Tipps</h3>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.6rem">
+        ${look.tips.map(t => `<li style="font-size:.88rem;line-height:1.6;padding-left:1.25rem;position:relative;color:var(--text)"><span style="position:absolute;left:0;color:var(--gold)">→</span>${t}</li>`).join('')}
+      </ul>
+    </div>
+
+    <!-- Ratings -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:1rem">Bewertung</h3>
+      ${[['✦ Trendfaktor',look.trendfactor,'var(--gold)'],['❤️ Tragbarkeit im Alltag',look.wearability,'var(--green)'],['🌿 Nachhaltigkeitspotenzial',look.sustainability,'var(--green)']].map(([label,val,color]) => `
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem">
+          <span style="font-size:.82rem;color:var(--sub);min-width:180px">${label}</span>
+          <div class="rating-bar"><div class="rating-fill" style="width:${val*10}%;background:${color}"></div></div>
+          <span style="font-size:.82rem;font-weight:600;min-width:36px">${val}/10</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Sources -->
+    <div class="card" style="padding:1.5rem;margin-bottom:1.25rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:.75rem">📚 Quellen &amp; Trend-Basis</h3>
+      ${look.sources.map(s => `<div style="font-size:.83rem;color:var(--gold);margin-bottom:.4rem">→ ${s}</div>`).join('')}
+      <div style="margin-top:.75rem;font-size:.78rem;color:var(--sub)">Stand: August 2025. Preise sind Richtwerte.</div>
+    </div>
+
+    <!-- Modify actions -->
+    <div style="margin-bottom:1.5rem">
+      <h3 style="font-weight:600;font-size:.9rem;margin-bottom:.75rem">Look anpassen</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <button class="chip" onclick="sendQuick('Günstiger machen');showScreen('s-chat')">💰 Günstiger</button>
+        <button class="chip" onclick="sendQuick('Eleganter gestalten');showScreen('s-chat')">✨ Eleganter</button>
+        <button class="chip" onclick="sendQuick('Alltagstauglicher machen');showScreen('s-chat')">👟 Alltagstauglich</button>
+        <button class="chip" onclick="sendQuick('Wintervariante zeigen');showScreen('s-chat')">❄️ Winterlook</button>
+        <button class="chip" onclick="sendQuick('Nur nachhaltige Alternativen');showScreen('s-chat')">🌿 Nachhaltiger</button>
+        <button class="chip" onclick="sendQuick('Bürotauglich machen');showScreen('s-chat')">🏢 Bürotauglich</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn-gold" style="flex:1" onclick="showScreen('s-chat')">💬 Mit Stylist chatten</button>
+      <button class="btn-outline" onclick="showScreen('s-results')">← Alle Looks</button>
+    </div>`;
+
+  showScreen('s-detail');
+}
+
+function quickModify(id, type) {
+  const msgs = {
+    cheaper: `Günstiger machen – Look ${id}`,
+    elegant: `Eleganter gestalten – Look ${id}`
+  };
+  sendQuick(msgs[type] || '');
+  showScreen('s-chat');
+}
+
+// ─── SAVE LOOK ───────────────────────────────────────────────
+function toggleSave(id, btn) {
+  const look = mockLooks.find(l => l.id === id);
+  if (app.savedLooks.has(id)) {
+    app.savedLooks.delete(id);
+    btn.textContent = '🤍';
+    showToast('Look entfernt.');
+  } else {
+    app.savedLooks.add(id);
+    btn.textContent = '❤️';
+    showToast('Look gespeichert! ✦');
+  }
+  renderSaved();
+}
+
+function renderSaved() {
+  const grid = document.getElementById('savedGrid');
+  const empty = document.getElementById('savedEmpty');
+  grid.innerHTML = '';
+  if (app.savedLooks.size === 0) {
+    empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  mockLooks.filter(l => app.savedLooks.has(l.id)).forEach(look => {
+    const card = document.createElement('div');
+    card.className = 'look-card';
+    card.innerHTML = `
+      <div style="height:160px;background:${look.gradient};border-radius:20px 20px 0 0;position:relative;cursor:pointer" onclick="openDetail(${look.id})">
+        <div style="position:absolute;bottom:1rem;left:1.25rem">
+          <div style="font-family:Georgia,serif;font-size:1.2rem;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.3)">${look.name}</div>
+        </div>
+      </div>
+      <div style="padding:1rem">
+        <div style="font-size:.82rem;color:var(--sub);margin-bottom:.75rem">${look.occasion} · ${look.budget}</div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn-gold" style="font-size:.78rem;flex:1" onclick="openDetail(${look.id})">Details</button>
+          <button class="btn-outline" style="font-size:.78rem" onclick="toggleSave(${look.id},this)">🗑️</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function shareMsg() { showToast('Link kopiert! (Demo-Funktion)'); }
+
+// ─── CHAT ────────────────────────────────────────────────────
+function initChat() {
+  app.chatMessages = [];
+  const welcome = {
+    role: 'ai',
+    text: 'Hallo! Ich bin dein persönlicher KI-Stylist. ✦\n\nIch habe gerade 3 Looks für dich zusammengestellt und aktuelle Modetrends recherchiert. Wie kann ich dir weiterhelfen?\n\nDu kannst zum Beispiel fragen:\n→ "Mach Look 1 bürotauglicher"\n→ "Günstigere Alternativen für Look 3"\n→ "Stelle einen Look für eine Reise nach Paris zusammen"'
+  };
+  app.chatMessages.push(welcome);
+  renderChat();
+}
+
+function renderChat() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  app.chatMessages.forEach(msg => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `display:flex;${msg.role === 'user' ? 'justify-content:flex-end' : 'justify-content:flex-start;gap:.65rem'}`;
+    if (msg.role === 'ai') {
+      wrap.innerHTML = `
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#472C45,#795A71,#CF9775);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;margin-top:.15rem">✦</div>
+        <div class="chat-bubble-ai">${msg.text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/→ /g,'<span style="color:var(--gold)">→</span> ')}</div>`;
+    } else {
+      wrap.innerHTML = `<div class="chat-bubble-user">${msg.text.replace(/\n/g,'<br>')}</div>`;
+    }
+    container.appendChild(wrap);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  app.chatMessages.push({ role:'user', text });
+  renderChat();
+  setTimeout(() => {
+    const response = getAIResponse(text.toLowerCase());
+    app.chatMessages.push({ role:'ai', text: response });
+    renderChat();
+  }, 800);
+}
+
+function sendQuick(text) {
+  document.getElementById('chatInput').value = text;
+  if (document.getElementById('s-chat').classList.contains('active')) {
+    sendChat();
+  }
+}
+
+function getAIResponse(text) {
+  if (text.includes('büro') || text.includes('office') || text.includes('meeting')) return chatResponses['bürotauglich'];
+  if (text.includes('günst') || text.includes('budget') || text.includes('cheap')) return chatResponses['günstiger'];
+  if (text.includes('elegant') || text.includes('feier')) return chatResponses['eleganter'];
+  if (text.includes('paris') || text.includes('reise') || text.includes('trip')) return chatResponses['paris'];
+  if (text.includes('winter') || text.includes('kalt')) return chatResponses['winter'];
+  if (text.includes('nachhaltig') || text.includes('öko') || text.includes('green')) return chatResponses['nachhaltig'];
+  return chatResponses['default'];
+}
+
+// ─── DARK MODE ───────────────────────────────────────────────
+function toggleDark() {
+  app.isDark = !app.isDark;
+  document.documentElement.setAttribute('data-theme', app.isDark ? 'dark' : 'light');
+  document.getElementById('sunIcon').style.display = app.isDark ? 'none' : 'block';
+  document.getElementById('moonIcon').style.display = app.isDark ? 'block' : 'none';
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Keyboard shortcut: D for dark mode
+  document.addEventListener('keydown', e => {
+    if (e.key === 'd' && e.ctrlKey) { e.preventDefault(); toggleDark(); }
+  });
+});
+</script>
+</body>
+</html>
