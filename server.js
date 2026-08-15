@@ -6,7 +6,7 @@ const path    = require('path');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const GEMINI_KEY = process.env.GOOGLE_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
@@ -39,40 +39,66 @@ async function callGemini(parts, maxTokens = 5000, temperature = 0.85) {
   return text;
 }
 
-// ── Helper: style prompt ───────────────────────────────────────────────────
+// ── Helper: wardrobe + trend prompt ───────────────────────────────────────
 function buildStylePrompt(profile, count) {
-  return `Du bist ein professioneller Fashion-Stilberater. Analysiere das/die hochgeladene(n) Foto(s) und erstelle ${count} konkrete Outfit-Empfehlungen.
+  return `Du bist ein professioneller Fashion-Stilberater mit Expertise in aktuellen Trends (2024/2025).
+
+SCHRITT 1 — KLEIDERSCHRANK ANALYSIEREN:
+Schaue dir alle hochgeladenen Fotos genau an. Identifiziere jeden sichtbaren Kleidungsstück:
+- Art des Teils (z.B. Blazer, Jeans, Bluse, Sneaker)
+- Farbe und Material soweit erkennbar
+- Stil (klassisch, casual, sportlich, elegant etc.)
 
 NUTZERPROFIL:
 - Körpertyp: ${profile.bodyType || 'nicht angegeben'}
 - Farbtyp: ${profile.colorType || 'nicht angegeben'}
 - Bevorzugte Stile: ${(profile.styles || []).join(', ') || 'nicht angegeben'}
 - Anlässe: ${(profile.occasions || []).join(', ') || 'nicht angegeben'}
-- Budget: ${profile.budget || 'nicht angegeben'}
+- Budget für Ergänzungen: ${profile.budget || 'nicht angegeben'}
 - Lieblingsfarben: ${profile.favoriteColors || 'nicht angegeben'}
 - Vermeiden: ${profile.avoidColors || 'nicht angegeben'}
 - Besonderheiten: ${profile.specialNotes || 'keine'}
 
-AUFGABE: Erstelle exakt ${count} Outfit-Empfehlungen als JSON-Array.
-Jedes Objekt MUSS folgende Felder haben:
+SCHRITT 2 — OUTFITS AUS VORHANDENEN TEILEN ERSTELLEN:
+Kombiniere die erkannten Kleidungsstücke zu ${count} trendigen Outfits passend zu aktuellen 2026/2027 Modetrends. Nutze dabei folgende aktuelle Trends:
+- Fluid Tailoring (weiche, fließende Anzugteile in gedeckten Tönen)
+- Utility Chic (funktionale Elemente wie Cargo-Details, technische Stoffe, stylisch kombiniert)
+- New Romanticism (romantische Silhouetten, Rüschen, florale Prints modern gestylt)
+- Tonal Dressing / Monochrome Layers (ein-Ton-Outfits in Erdtönen, Camel, Beige, Schiefer)
+- Deconstructed Classics (klassische Stücke neu interpretiert, asymmetrisch, oversized)
+- Sport Luxe 2.0 (sportliche Teile mit luxuriösen Elementen kombiniert)
+- Neo-Minimalism (klare Linien, hochwertige Basics, reduzierte Accessoires)
+- Retro Futurism (metallische Akzente, strukturierte Silhouetten, Space-Age-Details)
+- Coastal Cool (leichte Leinenstoffe, maritime Farben, entspannte Eleganz)
+- Power Feminine (starke Schultern, taillierte Schnitte, feminine Farben wie Bordeaux, Pflaume)
+
+SCHRITT 3 — JSON-AUSGABE:
+Antworte NUR mit einem JSON-Array, kein Text davor/danach, keine Markdown-Codeblöcke.
+
+Jedes Objekt MUSS exakt diese Felder haben:
 [
   {
-    "name": "Kurzer kreativer Outfit-Name",
-    "occasion": "Anlass (z.B. Business, Casual, Abend, Date)",
-    "description": "2-3 Sätze warum dieses Outfit zum Typ passt",
+    "name": "Kreativer Outfit-Name (z.B. 'Quiet Luxury Monday')",
+    "occasion": "Anlass (Business / Casual / Abend / Date / Wochenende)",
+    "trend": "Aktueller Trend 2024/2025 den dieses Outfit aufgreift (1 Satz)",
+    "description": "2-3 Sätze: welche deiner Teile kombiniert werden und warum es trendig ist",
+    "wardrobeItems": [
+      "Beschreibung Teil 1 aus dem Kleiderschrank-Foto",
+      "Beschreibung Teil 2 aus dem Kleiderschrank-Foto"
+    ],
     "items": [
-      { "category": "Oberteil", "item": "konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
-      { "category": "Hose/Rock", "item": "konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
-      { "category": "Schuhe", "item": "Schuhtyp", "color": "Farbe", "tip": "Styling-Tipp" },
-      { "category": "Accessoires", "item": "Accessoire", "color": "Farbe", "tip": "Styling-Tipp" }
+      { "category": "✅ Vorhanden", "item": "Konkretes Teil aus deinem Kleiderschrank", "color": "Farbe", "tip": "Wie du es stylen solltest" },
+      { "category": "✅ Vorhanden", "item": "Weiteres Teil aus deinem Kleiderschrank", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "🛍️ Ergänzung", "item": "1 empfohlenes Kaufteil das fehlt", "color": "Empfohlene Farbe", "tip": "Warum dieses Teil den Look vervollständigt" },
+      { "category": "🛍️ Ergänzung", "item": "Optionales 2. Kaufteil (Accessoire oder Schuhe)", "color": "Farbe", "tip": "Styling-Tipp" }
     ],
     "colors": ["#HEX1", "#HEX2", "#HEX3"],
-    "priceRange": "€ oder €€ oder €€€",
-    "fit": "Warum dieser Schnitt für den Körpertyp ideal ist"
+    "priceRange": "Budget für die Ergänzungen: € / €€ / €€€",
+    "shoppingTip": "Wo und wie man die empfohlenen Ergänzungen günstig findet (z.B. Zara, H&M, Vinted, Vintage-Shops)"
   }
 ]
 
-Antworte NUR mit dem JSON-Array. Kein Text davor oder danach, keine Markdown-Codeblöcke.`;
+WICHTIG: Nutze primär die bereits vorhandenen Kleidungsstücke. Empfehle maximal 2 Kaufteile pro Outfit. Sei spezifisch bei der Beschreibung der vorhandenen Teile (z.B. 'der hellblaue Oversized-Blazer aus Foto 2').`;
 }
 
 // ── POST /api/analyze ──────────────────────────────────────────────────────
