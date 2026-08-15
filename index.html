@@ -240,8 +240,27 @@
           </div>
         </div>
 
+        <!-- API KEY SETUP -->
+        <div style="margin-top:2.5rem;padding:1.5rem;background:var(--bg2);border-radius:16px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem">
+            <span style="font-size:1.1rem">🔑</span>
+            <span style="font-weight:600;font-size:.95rem">Gemini API-Key eintragen — für echte KI-Empfehlungen</span>
+          </div>
+          <p style="font-size:.83rem;color:var(--sub);margin-bottom:.85rem;line-height:1.6">
+            Kostenloser Key unter <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--gold)">aistudio.google.com</a> → „Create API Key". Ohne Key siehst du Demo-Daten.
+          </p>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <input type="password" class="api-key-input" placeholder="AIzaSy…" style="flex:1;min-width:200px;font-size:.88rem"
+              oninput="setApiKey(this.value)">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-outline" style="font-size:.82rem;padding:.6rem 1rem;text-decoration:none;white-space:nowrap">
+              Key holen →
+            </a>
+          </div>
+          <div id="apiKeyStatus" style="font-size:.82rem;color:var(--green);margin-top:.5rem;font-weight:500;display:none"></div>
+        </div>
+
         <!-- CTA -->
-        <div style="text-align:center;margin-top:3rem">
+        <div style="text-align:center;margin-top:2rem">
           <button class="btn-gold" style="font-size:1rem;padding:.9rem 2.5rem" onclick="startApp()">
             Jetzt kostenlos starten →
           </button>
@@ -611,7 +630,22 @@
         <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Highsnobiety "Minimal Luxe Trend Report", Jun. 2025</a>
         <a href="#" style="color:var(--gold);font-size:.83rem;text-decoration:none">→ Elle Germany, "Herbst-Capsule-Wardrobe", Aug. 2025</a>
       </div>
-      <div style="margin-top:1rem;font-size:.78rem;color:var(--sub)">⚠️ Produktpreise können abweichen. Alle Preisangaben sind Richtwerte ohne Gewähr. Keine Affiliate-Links in dieser Demo-Version.</div>
+      <div style="margin-top:1rem;font-size:.78rem;color:var(--sub)">⚠️ Alle Preisangaben sind Richtwerte ohne Gewähr. Keine Affiliate-Links.</div>
+    </div>
+
+    <!-- API Key Bar (sichtbar wenn kein Key gesetzt) -->
+    <div id="apiKeyBar" style="margin-top:2rem;padding:1.25rem 1.5rem;background:linear-gradient(135deg,rgba(121,90,113,.1),rgba(71,44,69,.08));border:1px solid var(--border);border-radius:16px">
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">🔑 Echte KI-Looks aktivieren</div>
+      <p style="font-size:.82rem;color:var(--sub);margin-bottom:.75rem">Kostenlosen Gemini API-Key eingeben → neue Analyse starten → personalisierte echte Empfehlungen.</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input type="password" class="api-key-input" placeholder="AIzaSy…" style="flex:1;min-width:200px;font-size:.88rem" oninput="setApiKey(this.value)">
+        <button class="btn-gold" style="font-size:.85rem;padding:.65rem 1.2rem;white-space:nowrap" onclick="if(app.apiKey){startApp()}else{showToast('Bitte erst API-Key eingeben.')}">
+          Neu analysieren →
+        </button>
+      </div>
+      <div style="margin-top:.5rem;font-size:.8rem">
+        Noch kein Key? → <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--gold)">aistudio.google.com</a> (kostenlos, 2 Minuten)
+      </div>
     </div>
   </div>
 </section>
@@ -694,7 +728,9 @@ const app = {
   uploadedImages: [],
   savedLooks: new Set(),
   chatMessages: [],
-  formData: {}
+  formData: {},
+  apiKey: '',
+  generatedLooks: null
 };
 
 // ─── MOCK DATA ───────────────────────────────────────────────
@@ -965,34 +1001,45 @@ function renderPreviews() {
 }
 
 // ─── ANALYSIS SIMULATION ─────────────────────────────────────
-function simulateAnalysis() {
+async function simulateAnalysis() {
   showScreen('s-loading');
-  const messages = [
-    'Analysiere dein Stil-Profil …',
-    'Recherchiere aktuelle Modetrends (Vogue, Elle, Highsnobiety) …',
-    'Überprüfe Fashion Week Berichte SS/AW 2025 …',
-    'Vergleiche saisonale Farben und Schnitte …',
-    'Erstelle personalisierte Looks für deinen Typen …',
-    'Füge Styling-Tipps und Quellen hinzu …',
-    'Finaler Check: Inklusivität und Respekt sichergestellt ✓',
-    'Deine Looks sind fertig!'
-  ];
-  let i = 0;
   const bar = document.getElementById('loadingBar');
   const msg = document.getElementById('loadingMsg');
-  const interval = setInterval(() => {
+
+  const messages = app.apiKey
+    ? ['Profil wird analysiert …','Bilder werden verarbeitet …','KI erstellt deine Looks …','Styling-Tipps werden hinzugefügt …','Fast fertig …']
+    : ['Analysiere Stil-Profil …','Lade Demo-Trends …','Erstelle Beispiel-Looks …','Füge Tipps hinzu …','Fertig!'];
+
+  let i = 0;
+  const ticker = setInterval(() => {
     if (i < messages.length) {
       msg.textContent = messages[i];
-      bar.style.width = ((i+1)/messages.length*100) + '%';
+      bar.style.width = Math.min(((i+1)/messages.length)*75, 75) + '%';
       i++;
-    } else {
-      clearInterval(interval);
-      setTimeout(() => {
-        renderResults();
-        showScreen('s-results');
-        initChat();
-      }, 500);
     }
+  }, 800);
+
+  try {
+    if (app.apiKey) {
+      app.generatedLooks = await generateRealLooks();
+    } else {
+      await new Promise(r => setTimeout(r, 4200));
+      app.generatedLooks = null;
+    }
+  } catch(err) {
+    console.error('KI-Fehler:', err);
+    showToast('⚠️ ' + (err.message || 'KI-Fehler') + ' — zeige Demo-Looks.');
+    app.generatedLooks = null;
+  }
+
+  clearInterval(ticker);
+  bar.style.width = '100%';
+  msg.textContent = 'Deine Looks sind fertig! ✦';
+
+  setTimeout(() => {
+    renderResults();
+    showScreen('s-results');
+    initChat();
   }, 600);
 }
 
@@ -1000,7 +1047,14 @@ function simulateAnalysis() {
 function renderResults() {
   const grid = document.getElementById('lookGrid');
   grid.innerHTML = '';
-  mockLooks.forEach(look => {
+  const looks = app.generatedLooks || mockLooks;
+  if (!app.generatedLooks) {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'grid-column:1/-1;padding:.85rem 1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px;font-size:.83rem;color:var(--sub);display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem';
+    notice.innerHTML = '<span style="font-size:1.1rem">💡</span><span>Das sind <strong style="color:var(--text)">Demo-Looks</strong>. Trage deinen <strong style="color:var(--gold)">Gemini API-Key</strong> ein (Schaltfläche unten) für echte, personalisierte KI-Empfehlungen.</span>';
+    grid.appendChild(notice);
+  }
+  looks.forEach(look => {
     const saved = app.savedLooks.has(look.id);
     const card = document.createElement('div');
     card.className = 'look-card';
@@ -1064,7 +1118,7 @@ function filterResults(btn, tag) {
 
 // ─── LOOK DETAIL ─────────────────────────────────────────────
 function openDetail(id) {
-  const look = mockLooks.find(l => l.id === id);
+  const look = (app.generatedLooks || mockLooks).find(l => l.id === id);
   if (!look) return;
   const saved = app.savedLooks.has(id);
   document.getElementById('detailContent').innerHTML = `
@@ -1191,7 +1245,7 @@ function quickModify(id, type) {
 
 // ─── SAVE LOOK ───────────────────────────────────────────────
 function toggleSave(id, btn) {
-  const look = mockLooks.find(l => l.id === id);
+  const look = (app.generatedLooks || mockLooks).find(l => l.id === id);
   if (app.savedLooks.has(id)) {
     app.savedLooks.delete(id);
     btn.textContent = '🤍';
@@ -1212,7 +1266,7 @@ function renderSaved() {
     empty.style.display = 'block'; return;
   }
   empty.style.display = 'none';
-  mockLooks.filter(l => app.savedLooks.has(l.id)).forEach(look => {
+  (app.generatedLooks || mockLooks).filter(l => app.savedLooks.has(l.id)).forEach(look => {
     const card = document.createElement('div');
     card.className = 'look-card';
     card.innerHTML = `
@@ -1309,6 +1363,178 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── ECHTE KI-INTEGRATION (Gemini API) ───────────────────────
+async function generateRealLooks() {
+  const profile = gatherFormData();
+  const lookCount = parseInt(profile.lookCount) || 3;
+  const parts = [];
+
+  // Bilder als Base64 anhängen
+  for (const img of app.uploadedImages) {
+    const match = img.src.match(/^data:(image\/\w+);base64,(.+)/);
+    if (match) {
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+    }
+  }
+
+  parts.push({ text: buildStylePrompt(profile, lookCount) });
+
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${app.apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { temperature: 0.85, maxOutputTokens: 5000 }
+      })
+    }
+  );
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    const msg = e?.error?.message || '';
+    if (resp.status === 400 && msg.includes('API_KEY')) throw new Error('Ungültiger API-Key. Bitte prüfe deinen Gemini-Key.');
+    if (resp.status === 429) throw new Error('API-Limit erreicht. Bitte warte kurz.');
+    throw new Error('KI-Anfrage fehlgeschlagen (Status ' + resp.status + ').');
+  }
+
+  const data = await resp.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  // JSON aus Antwort extrahieren
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) throw new Error('KI hat kein gültiges Format geliefert. Bitte erneut versuchen.');
+
+  const raw = JSON.parse(jsonMatch[0]);
+  return raw.map((look, i) => ({
+    ...look,
+    id: i + 1,
+    gradient: buildGradient(look.colors),
+    tags: inferTags(look),
+    sources: look.trendSources || [],
+    items: look.items || {},
+    tips: look.tips || [],
+    trendfactor: look.trendfactor || look.trendFactor || 8,
+    wearability: look.wearability || 9,
+    sustainability: look.sustainability || look.sustainabilityScore || 7,
+    colorNames: (look.colors || []).map(c => c.name),
+    colors: (look.colors || []).map(c => c.hex),
+    why: look.why || look.whyItFits || '',
+    budget: look.budget || `${look.budgetMin || 100}–${look.budgetMax || 400} €`,
+  }));
+}
+
+function buildStylePrompt(profile, lookCount) {
+  const lines = [
+    profile.height       && `Größe: ${profile.height} cm`,
+    profile.age          && `Alter: ${profile.age}`,
+    profile.colorType    && `Farbtyp: ${profile.colorType}`,
+    profile.skinTone     && `Hautunterton: ${profile.skinTone}`,
+    profile.favoriteColors && `Lieblingsfarben: ${profile.favoriteColors}`,
+    profile.avoidColors  && `Farben vermeiden: ${profile.avoidColors}`,
+    profile.styles?.length && `Stilrichtungen: ${profile.styles.join(', ')}`,
+    profile.brands       && `Lieblingsmarken: ${profile.brands}`,
+    profile.budget       && `Budget: bis ${profile.budget} €`,
+    profile.occasions?.length && `Anlass: ${profile.occasions.join(', ')}`,
+    profile.weather      && `Wetter: ${profile.weather}`,
+    profile.location     && `Ort: ${profile.location}`,
+    profile.dresscode    && `Dresscode: ${profile.dresscode}`,
+    profile.existingItems && `Vorhandene Kleidung: ${profile.existingItems}`,
+  ].filter(Boolean).join('\n');
+
+  return `Du bist ein professioneller, wertschätzender KI-Stylist. Erstelle ${lookCount} vollständige Outfit-Empfehlungen.
+
+NUTZERPROFIL:
+${lines || 'Keine spezifischen Angaben – erstelle vielseitige Empfehlungen.'}
+
+${app.uploadedImages.length ? 'Es wurden Fotos hochgeladen. Analysiere sichtbare Farben, Kleidung und Proportionen ausschließlich für stilistische Empfehlungen.' : ''}
+
+REGELN:
+- Körperformen IMMER positiv und respektvoll beschreiben (nie "verstecken" oder "kaschieren")
+- Keine Marken, Preise oder Links erfinden
+- Erkläre bei jedem Look warum er zum Profil passt
+- Antworte NUR mit einem JSON-Array, kein weiterer Text
+
+JSON-FORMAT (für jeden Look):
+[{
+  "name": "Look-Name",
+  "tagline": "Kurze motivierende Beschreibung",
+  "occasion": "Anlass",
+  "season": "Jahreszeit",
+  "weather": "z.B. 18–25°C",
+  "style": "Stilrichtung",
+  "budget": "150–350 €",
+  "budgetMin": 150,
+  "budgetMax": 350,
+  "budgetTier": "mittel",
+  "colors": [{"hex": "#RRGGBB", "name": "Farbname"}],
+  "items": {
+    "top": "Beschreibung + Preisrahmen",
+    "bottom": "Beschreibung + Preisrahmen",
+    "shoes": "Beschreibung + Preisrahmen",
+    "bag": "Beschreibung + Preisrahmen",
+    "jewelry": "Beschreibung",
+    "outerwear": "Beschreibung + Preisrahmen"
+  },
+  "why": "Erklärung warum dieser Look zu den Angaben passt",
+  "tips": ["Tipp 1", "Tipp 2", "Tipp 3"],
+  "trendfactor": 8,
+  "wearability": 9,
+  "sustainability": 7,
+  "trendSources": [{"title": "Allgemeines Styling-Wissen", "url": "#"}]
+}]`;
+}
+
+function gatherFormData() {
+  return {
+    height:        document.getElementById('f-height')?.value || '',
+    age:           document.getElementById('f-age')?.value || '',
+    colorType:     document.getElementById('f-colortype')?.value || '',
+    skinTone:      document.getElementById('f-skintone')?.value || '',
+    favoriteColors:document.getElementById('f-favcolors')?.value || '',
+    avoidColors:   document.getElementById('f-avoidcolors')?.value || '',
+    styles:        [...document.querySelectorAll('#styleChips .chip.selected')].map(c => c.textContent.trim()),
+    brands:        document.getElementById('f-brands')?.value || '',
+    location:      document.getElementById('f-location')?.value || '',
+    weather:       document.getElementById('f-weather')?.value || '',
+    dresscode:     document.getElementById('f-dresscode')?.value || '',
+    lookCount:     document.getElementById('f-lookcount')?.value || '3',
+    existingItems: document.getElementById('f-existing')?.value || '',
+    occasions:     [...document.querySelectorAll('#occasionChips .chip.selected')].map(c => c.textContent.trim()),
+    budget:        document.getElementById('f-budget')?.value || '',
+  };
+}
+
+function buildGradient(colors) {
+  if (!colors || colors.length < 2) return 'linear-gradient(145deg,#D2C0C2 0%,#795A71 100%)';
+  const hexes = colors.map(c => typeof c === 'string' ? c : c.hex).filter(Boolean);
+  if (hexes.length < 2) return 'linear-gradient(145deg,#D2C0C2 0%,#795A71 100%)';
+  return `linear-gradient(145deg,${hexes[0]} 0%,${hexes[1]} 50%,${hexes[hexes.length-1]} 100%)`;
+}
+
+function inferTags(look) {
+  const text = ((look.style||'') + (look.occasion||'') + (look.tagline||'')).toLowerCase();
+  const tags = [];
+  if (text.match(/casual|alltag|weekend|freizeit/)) tags.push('casual');
+  if (text.match(/business|büro|office|meeting|beruf/)) tags.push('business');
+  if (text.match(/abend|party|gala|elegant|dinner/)) tags.push('evening');
+  if ((look.sustainability || look.sustainabilityScore || 0) >= 7) tags.push('sustainable');
+  if ((look.budgetMax || 9999) <= 250) tags.push('budget');
+  return tags.length ? tags : ['casual'];
+}
+
+function setApiKey(val) {
+  app.apiKey = val.trim();
+  const status = document.getElementById('apiKeyStatus');
+  if (status) {
+    status.style.display = app.apiKey ? 'block' : 'none';
+    status.textContent = app.apiKey ? '✓ API-Key gesetzt — echte KI aktiv!' : '';
+  }
+  // Sync alle Key-Inputs
+  document.querySelectorAll('.api-key-input').forEach(el => { if (el.value !== val) el.value = val; });
 }
 
 // ─── INIT ────────────────────────────────────────────────────
