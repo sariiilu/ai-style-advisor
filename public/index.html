@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI Stil-Berater</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: ['attribute', '[data-theme="dark"]'],
+  theme: {
+    extend: {
+      colors: {
+        mauve:  { DEFAULT:'#D2C0C2', dark:'#a08890' },
+        slate2: { DEFAULT:'#8CB6A5', dark:'#5a8a78' },
+        sand:   { DEFAULT:'#CF9775', dark:'#a06845' },
+        purple2:{ DEFAULT:'#795A71', dark:'#5a3f54' },
+        plum:   { DEFAULT:'#472C45', dark:'#2d1a2c' },
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --bg:#F5F2F8; --bg2:#ECE6F2; --card:#FFFFFF;
+    --border:#DDD5E8; --text:#2A1F2D; --sub:#7A6B80;
+    --accent:#795A71; --sand:#CF9775; --green:#5A8A6A;
+    --shadow: 0 4px 24px rgba(121,90,113,0.10);
+  }
+  [data-theme="dark"] {
+    --bg:#1A1020; --bg2:#241730; --card:#2C1E38;
+    --border:#3A2545; --text:#F0EDF5; --sub:#9A8AA0;
+    --accent:#9B7A96; --sand:#D4A882; --green:#72A882;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; transition: background .3s, color .3s; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+  .btn-primary { background: var(--accent); color: #fff; border-radius: 10px; padding: 12px 28px; font-weight: 600; cursor: pointer; border: none; transition: opacity .2s, transform .1s; }
+  .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--accent); border: 2px solid var(--accent); border-radius: 10px; padding: 10px 24px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn-outline:hover { background: var(--accent); color: #fff; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; cursor: pointer; font-size: 14px; transition: all .2s; background: var(--card); color: var(--text); }
+  .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .step-dot { width:10px; height:10px; border-radius:50%; background: var(--border); transition: background .3s; }
+  .step-dot.active { background: var(--accent); }
+  input, select, textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--bg2); color: var(--text);
+    font-size: 15px; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .look-card { cursor: pointer; transition: transform .2s, box-shadow .2s; }
+  .look-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(121,90,113,0.18); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--bg2); color: var(--sub); }
+  .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 15px; line-height: 1.5; word-break: break-word; }
+  .chat-bubble.user { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-bubble.ai { background: var(--card); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+  .drop-zone { border: 2.5px dashed var(--border); border-radius: 16px; padding: 40px 20px; text-align: center; transition: border-color .2s, background .2s; cursor: pointer; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: var(--bg2); }
+  .progress-bar { height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width .4s ease; }
+  .loader { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn .5s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .overlay { position:fixed; inset:0; background: rgba(0,0,0,.55); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .overlay-card { max-width: 680px; width:100%; max-height:90vh; overflow-y:auto; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .error-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#c0392b; color:#fff; padding:12px 24px; border-radius:10px; font-weight:600; z-index:200; box-shadow:0 4px 16px rgba(0,0,0,.25); animation: fadeIn .3s ease; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 1 — LANDING
+═══════════════════════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="min-h-screen flex flex-col">
+    <!-- Nav -->
+    <nav class="flex items-center justify-between px-8 py-5">
+      <div class="flex items-center gap-2 font-bold text-xl" style="color:var(--accent)">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="14" fill="currentColor" opacity=".15"/><path d="M9 8h10l-2 7H11L9 8zm2 9a3 3 0 106 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+        StyleAI
+      </div>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)" title="Dark Mode">
+        <svg id="icon-sun" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </nav>
+
+    <!-- Hero -->
+    <div class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16"
+         style="background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%)">
+      <div class="mb-6 p-5 rounded-full inline-block" style="background:linear-gradient(135deg,#795A71,#CF9775)">
+        <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><path d="M16 12h16l-4 14H20L16 12z" fill="white" opacity=".9"/><path d="M20 26a8 8 0 1016 0" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="24" cy="8" r="3" fill="white" opacity=".7"/></svg>
+      </div>
+      <h1 class="text-5xl font-extrabold mb-4" style="color:var(--text)">
+        Dein KI <span style="color:var(--accent)">Stil-Berater</span>
+      </h1>
+      <p class="text-lg mb-10 max-w-lg" style="color:var(--sub)">
+        Lade Fotos hoch, erstelle dein Profil und erhalte personalisierte Outfit-Empfehlungen — analysiert von echter KI.
+      </p>
+      <button class="btn-primary text-lg px-10 py-4" onclick="showScreen('screen-wizard')">
+        Kostenlos starten →
+      </button>
+      <p class="mt-4 text-sm" style="color:var(--sub)">DSGVO-konform · Fotos werden nicht gespeichert</p>
+
+      <!-- Feature chips -->
+      <div class="flex flex-wrap justify-center gap-3 mt-12">
+        <span class="chip">👗 Outfit-Analyse</span>
+        <span class="chip">🎨 Farbtyp-Matching</span>
+        <span class="chip">💬 KI-Chat</span>
+        <span class="chip">🌓 Dark Mode</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 2 — WIZARD (4 Schritte)
+═══════════════════════════════════════════════════════ -->
+<div id="screen-wizard" class="screen">
+  <div class="min-h-screen flex flex-col">
+    <nav class="flex items-center justify-between px-8 py-5">
+      <button onclick="showScreen('screen-landing')" class="flex items-center gap-2 font-bold text-lg" style="color:var(--accent)">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        StyleAI
+      </button>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
+        <svg id="icon-sun2" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon2" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </nav>
+
+    <div class="flex-1 flex items-center justify-center px-4 py-8">
+      <div class="card p-8 w-full max-w-xl fade-in">
+        <!-- Step indicator -->
+        <div class="flex justify-between items-center mb-8">
+          <span id="step-label" class="text-sm font-semibold" style="color:var(--accent)">Schritt 1 von 4</span>
+          <div class="flex gap-2">
+            <div class="step-dot active" id="dot-1"></div>
+            <div class="step-dot" id="dot-2"></div>
+            <div class="step-dot" id="dot-3"></div>
+            <div class="step-dot" id="dot-4"></div>
+          </div>
+        </div>
+        <div class="progress-bar mb-8"><div class="progress-fill" id="progress-fill" style="width:25%"></div></div>
+
+        <!-- ── Step 1: Persönliches ── -->
+        <div id="wizard-step-1" class="wizard-step">
+          <h2 class="text-2xl font-bold mb-2">Dein Körperprofil</h2>
+          <p class="mb-6" style="color:var(--sub)">Diese Infos helfen der KI, Schnitte zu empfehlen die zu dir passen.</p>
+          <div class="space-y-4">
+            <div>
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Körpertyp</label>
+              <div class="flex flex-wrap gap-2" id="chips-bodytype">
+                <span class="chip" data-val="Apfelform">🍎 Apfel</span>
+                <span class="chip" data-val="Birnenform">🍐 Birne</span>
+                <span class="chip" data-val="Sanduhrform">⌛ Sanduhr</span>
+                <span class="chip" data-val="Rechteckig">▬ Rechteck</span>
+                <span class="chip" data-val="Dreieck invertiert">△ Invertiertes Dreieck</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Farbtyp</label>
+              <div class="flex flex-wrap gap-2" id="chips-colortype">
+                <span class="chip" data-val="Frühlingstyp">🌸 Frühling</span>
+                <span class="chip" data-val="Sommertyp">☀️ Sommer</span>
+                <span class="chip" data-val="Herbsttyp">🍂 Herbst</span>
+                <span class="chip" data-val="Wintertyp">❄️ Winter</span>
+                <span class="chip" data-val="Unbekannt">❓ Weiß nicht</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Lieblingsfarben</label>
+              <input type="text" id="f-favoriteColors" placeholder="z.B. Dunkelblau, Camel, Weiß ...">
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Farben / Muster vermeiden</label>
+              <input type="text" id="f-avoidColors" placeholder="z.B. Orange, Neon, Karomuster ...">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Step 2: Stil ── -->
+        <div id="wizard-step-2" class="wizard-step" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Dein Stil</h2>
+          <p class="mb-6" style="color:var(--sub)">Wähle alle Stile die dich ansprechen (Mehrfachauswahl).</p>
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-2" id="chips-styles">
+              <span class="chip" data-val="Klassisch">👔 Klassisch</span>
+              <span class="chip" data-val="Business">💼 Business</span>
+              <span class="chip" data-val="Casual">👕 Casual</span>
+              <span class="chip" data-val="Boho">🌻 Boho</span>
+              <span class="chip" data-val="Minimalistisch">⬜ Minimalistisch</span>
+              <span class="chip" data-val="Elegant">✨ Elegant</span>
+              <span class="chip" data-val="Sportlich">🏃 Sportlich</span>
+              <span class="chip" data-val="Streetwear">🧢 Streetwear</span>
+              <span class="chip" data-val="Feminin">🌸 Feminin</span>
+              <span class="chip" data-val="Edgy">⚡ Edgy</span>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Budget pro Outfit</label>
+              <select id="f-budget">
+                <option value="">Bitte wählen</option>
+                <option value="Unter 50€">Unter 50 €</option>
+                <option value="50–150€">50–150 €</option>
+                <option value="150–300€">150–300 €</option>
+                <option value="Über 300€">Über 300 €</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Besondere Hinweise (optional)</label>
+              <textarea id="f-specialNotes" rows="3" placeholder="z.B. Schwangerschaft, Tattoos, religiöse Kleidungsvorschriften, Größe XL, ..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Step 3: Anlässe ── -->
+        <div id="wizard-step-3" class="wizard-step" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Anlässe</h2>
+          <p class="mb-6" style="color:var(--sub)">Für welche Situationen brauchst du Outfit-Inspiration?</p>
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-2" id="chips-occasions">
+              <span class="chip" data-val="Büro/Business">🏢 Büro</span>
+              <span class="chip" data-val="Alltag/Casual">☕ Alltag</span>
+              <span class="chip" data-val="Abendveranstaltung">🥂 Abend</span>
+              <span class="chip" data-val="Date">💑 Date</span>
+              <span class="chip" data-val="Sport/Outdoor">🏃 Sport</span>
+              <span class="chip" data-val="Reise">✈️ Reise</span>
+              <span class="chip" data-val="Hochzeit/Feier">💍 Hochzeit</span>
+              <span class="chip" data-val="Wochenende">🛋️ Wochenende</span>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Wie viele Looks soll die KI erstellen?</label>
+              <select id="f-lookCount">
+                <option value="2">2 Looks</option>
+                <option value="3" selected>3 Looks</option>
+                <option value="4">4 Looks</option>
+                <option value="5">5 Looks</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Step 4: Fotos ── -->
+        <div id="wizard-step-4" class="wizard-step" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Deine Fotos</h2>
+          <p class="mb-2" style="color:var(--sub)">Lade 1–5 Fotos hoch. Die KI analysiert deine Figur, Hautton und vorhandene Kleidung.</p>
+          <p class="text-xs mb-6 p-3 rounded-lg" style="background:var(--bg2); color:var(--sub)">🔒 Fotos werden nur für diese Analyse verwendet und danach nicht gespeichert (DSGVO).</p>
+
+          <div class="drop-zone mb-4" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--sub); margin:0 auto 12px"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 20M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <p style="color:var(--sub)">Fotos hier ablegen oder <strong style="color:var(--accent)">klicken</strong></p>
+            <p class="text-sm mt-1" style="color:var(--sub)">JPG, PNG, WEBP · max. 10 MB pro Foto</p>
+          </div>
+          <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFiles(event.target.files)">
+          <div id="image-preview" class="grid grid-cols-3 gap-3 mt-2"></div>
+
+          <div class="mt-6 p-4 rounded-lg" style="background:var(--bg2)">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" id="dsgvo-check" class="mt-1 w-4 h-4 flex-shrink-0" style="width:16px;height:16px">
+              <span class="text-sm" style="color:var(--sub)">Ich stimme zu, dass meine Fotos und Profildaten einmalig zur KI-Analyse verwendet und danach nicht gespeichert werden.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Nav buttons -->
+        <div class="flex justify-between mt-8">
+          <button id="btn-back" class="btn-outline" onclick="wizardBack()" style="display:none">← Zurück</button>
+          <button id="btn-next" class="btn-primary ml-auto" onclick="wizardNext()">Weiter →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 3 — ANALYZING
+═══════════════════════════════════════════════════════ -->
+<div id="screen-analyzing" class="screen">
+  <div class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+    <div class="loader mb-8"></div>
+    <h2 class="text-2xl font-bold mb-3">KI analysiert dein Stil-Profil…</h2>
+    <p id="analyzing-msg" class="mb-4" style="color:var(--sub); max-width:380px">Bilder werden verarbeitet und Outfit-Empfehlungen erstellt. Das dauert 10–30 Sekunden.</p>
+    <div class="w-64 progress-bar"><div class="progress-fill" id="analyze-progress" style="width:5%"></div></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 4 — RESULTS
+═══════════════════════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="min-h-screen flex flex-col">
+    <!-- Nav -->
+    <nav class="flex items-center justify-between px-8 py-5 sticky top-0 z-10" style="background:var(--bg); border-bottom:1px solid var(--border)">
+      <span class="font-bold text-xl" style="color:var(--accent)">StyleAI</span>
+      <div class="flex gap-3">
+        <button onclick="showScreen('screen-chat')" class="btn-outline text-sm px-4 py-2">💬 KI-Chat</button>
+        <button onclick="showScreen('screen-landing')" class="btn-outline text-sm px-4 py-2">↩ Neu starten</button>
+        <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
+          <svg id="icon-sun3" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg id="icon-moon3" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto px-4 py-10 w-full">
+      <h1 class="text-3xl font-extrabold mb-2">Deine Looks ✨</h1>
+      <p class="mb-8" style="color:var(--sub)">Personalisiert von der KI basierend auf deinem Profil und deinen Fotos.</p>
+
+      <!-- Filter -->
+      <div class="flex flex-wrap gap-2 mb-8" id="filter-chips">
+        <span class="chip selected" data-filter="all" onclick="filterLooks('all',this)">Alle</span>
+        <span class="chip" data-filter="Business" onclick="filterLooks('Business',this)">Business</span>
+        <span class="chip" data-filter="Casual" onclick="filterLooks('Casual',this)">Casual</span>
+        <span class="chip" data-filter="Abend" onclick="filterLooks('Abend',this)">Abend</span>
+        <span class="chip" data-filter="Date" onclick="filterLooks('Date',this)">Date</span>
+      </div>
+
+      <!-- Look cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="looks-grid">
+        <!-- populated by JS -->
+      </div>
+
+      <!-- Chat CTA -->
+      <div class="mt-12 card p-8 text-center">
+        <div class="text-4xl mb-3">💬</div>
+        <h3 class="text-xl font-bold mb-2">Fragen zu deinen Looks?</h3>
+        <p class="mb-5" style="color:var(--sub)">Chatte direkt mit der KI — Styling-Tipps, Shopping-Fragen, Kombinationsideen.</p>
+        <button class="btn-primary px-8 py-3" onclick="showScreen('screen-chat')">KI-Chat öffnen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 5 — CHAT
+═══════════════════════════════════════════════════════ -->
+<div id="screen-chat" class="screen">
+  <div class="min-h-screen flex flex-col">
+    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:var(--bg); border-bottom:1px solid var(--border)">
+      <div class="flex items-center gap-3">
+        <button onclick="showScreen('screen-results')" class="p-2 rounded-full" style="background:var(--bg2)" title="Zurück">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
+        <div>
+          <div class="font-semibold">StyleAI Chat</div>
+          <div class="text-xs" style="color:var(--green)">● Online</div>
+        </div>
+      </div>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
+        <svg id="icon-sun4" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon4" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </nav>
+
+    <!-- Suggestion chips -->
+    <div class="flex gap-2 px-4 py-3 overflow-x-auto" style="border-bottom:1px solid var(--border)">
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Welcher Look passt am besten für ein Meeting?')">📅 Meeting-Look</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wie kombiniere ich Look 1 für ein Date?')">💑 Date-Outfit</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Welche Accessoires passen zu meinen Looks?')">💍 Accessoires</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wo kann ich die empfohlenen Teile günstig kaufen?')">🛍️ Shopping</button>
+    </div>
+
+    <!-- Messages -->
+    <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4" id="chat-messages">
+      <div class="flex gap-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
+        <div class="chat-bubble ai">Hallo! 👋 Ich habe deine Looks analysiert und bin bereit, alle Fragen zu beantworten. Was möchtest du wissen?</div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="px-4 py-4" style="border-top:1px solid var(--border); background:var(--bg)">
+      <div class="flex gap-3 max-w-3xl mx-auto">
+        <input type="text" id="chat-input" placeholder="Frage die KI über deine Looks…" style="flex:1" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendChat();}">
+        <button class="btn-primary px-5" id="chat-send-btn" onclick="sendChat()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     LOOK DETAIL OVERLAY
+═══════════════════════════════════════════════════════ -->
+<div id="look-overlay" class="overlay" style="display:none" onclick="closeLookOverlay(event)">
+  <div class="card overlay-card p-8 fade-in" onclick="event.stopPropagation()">
+    <div id="overlay-content"></div>
+    <button class="btn-outline w-full mt-6" onclick="document.getElementById('look-overlay').style.display='none'">Schließen</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+// ── App state ──────────────────────────────────────────────────────────────
+const app = {
+  isDark: false,
+  currentStep: 1,
+  uploadedImages: [],    // { src: dataUrl, mimeType, base64 }
+  formData: {},
+  generatedLooks: [],
+  chatMessages: [],
+  savedLooks: new Set()
+};
+
+// ── Screen navigation ──────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Dark mode ──────────────────────────────────────────────────────────────
+function toggleDark() {
+  app.isDark = !app.isDark;
+  document.documentElement.setAttribute('data-theme', app.isDark ? 'dark' : 'light');
+  ['', '2', '3', '4'].forEach(n => {
+    const sun = document.getElementById('icon-sun' + n);
+    const moon = document.getElementById('icon-moon' + n);
+    if (sun) sun.style.display = app.isDark ? 'none' : 'block';
+    if (moon) moon.style.display = app.isDark ? 'block' : 'none';
+  });
+}
+
+// ── Chip selection (single) ────────────────────────────────────────────────
+function initSingleChips(containerId, stateKey) {
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      this.classList.add('selected');
+      app.formData[stateKey] = this.dataset.val;
+    });
+  });
+}
+
+// ── Chip selection (multi) ─────────────────────────────────────────────────
+function initMultiChips(containerId, stateKey) {
+  app.formData[stateKey] = [];
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      this.classList.toggle('selected');
+      const val = this.dataset.val;
+      const arr = app.formData[stateKey];
+      const idx = arr.indexOf(val);
+      if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+    });
+  });
+}
+
+// ── Wizard navigation ──────────────────────────────────────────────────────
+function wizardNext() {
+  if (app.currentStep === 4) { startAnalysis(); return; }
+  if (app.currentStep === 4 && !document.getElementById('dsgvo-check').checked) {
+    showError('Bitte stimme der Datenschutzerklärung zu.'); return;
+  }
+  gatherStep();
+  app.currentStep++;
+  updateWizard();
+}
+function wizardBack() {
+  if (app.currentStep <= 1) return;
+  app.currentStep--;
+  updateWizard();
+}
+function gatherStep() {
+  app.formData.favoriteColors = document.getElementById('f-favoriteColors')?.value || '';
+  app.formData.avoidColors    = document.getElementById('f-avoidColors')?.value || '';
+  app.formData.budget         = document.getElementById('f-budget')?.value || '';
+  app.formData.specialNotes   = document.getElementById('f-specialNotes')?.value || '';
+  app.formData.lookCount      = document.getElementById('f-lookCount')?.value || '3';
+}
+function updateWizard() {
+  document.querySelectorAll('.wizard-step').forEach((s, i) => {
+    s.style.display = (i + 1 === app.currentStep) ? 'block' : 'none';
+  });
+  document.getElementById('step-label').textContent = `Schritt ${app.currentStep} von 4`;
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('dot-' + i).className = 'step-dot' + (i <= app.currentStep ? ' active' : '');
+  }
+  document.getElementById('progress-fill').style.width = (app.currentStep * 25) + '%';
+  document.getElementById('btn-back').style.display = app.currentStep > 1 ? 'block' : 'none';
+  document.getElementById('btn-next').textContent = app.currentStep === 4 ? '✨ Analyse starten' : 'Weiter →';
+}
+
+// ── Image upload ───────────────────────────────────────────────────────────
+function handleFiles(files) {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  Array.from(files).forEach(file => {
+    if (!allowed.includes(file.type)) { showError('Nur JPG, PNG und WEBP erlaubt.'); return; }
+    if (file.size > 10 * 1024 * 1024) { showError(`${file.name} ist größer als 10 MB.`); return; }
+    if (app.uploadedImages.length >= 5) { showError('Maximal 5 Fotos erlaubt.'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const src = e.target.result;
+      const match = src.match(/^data:(image\/\w+);base64,(.+)/);
+      if (match) {
+        app.uploadedImages.push({ src, mimeType: match[1], base64: match[2] });
+        renderPreviews();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderPreviews() {
+  const grid = document.getElementById('image-preview');
+  grid.innerHTML = '';
+  app.uploadedImages.forEach((img, i) => {
+    const div = document.createElement('div');
+    div.className = 'relative';
+    div.innerHTML = `
+      <img src="${img.src}" class="w-full h-28 object-cover rounded-xl">
+      <button onclick="removeImage(${i})" class="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-lg font-bold" style="background:rgba(0,0,0,.55)">×</button>
+    `;
+    grid.appendChild(div);
+  });
+}
+function removeImage(i) {
+  app.uploadedImages.splice(i, 1);
+  renderPreviews();
+}
+function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function onDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function onDrop(e)      { e.preventDefault(); onDragLeave(); handleFiles(e.dataTransfer.files); }
+
+// ── Analysis ───────────────────────────────────────────────────────────────
+async function startAnalysis() {
+  gatherStep();
+  if (!document.getElementById('dsgvo-check').checked) {
+    showError('Bitte stimme der Datenschutzerklärung zu.');
+    return;
+  }
+  showScreen('screen-analyzing');
+
+  // Animate progress bar
+  let pct = 5;
+  const pbar = document.getElementById('analyze-progress');
+  const msgs = [
+    'Fotos werden analysiert…',
+    'Farbtyp wird erkannt…',
+    'Outfit-Kombinationen werden berechnet…',
+    'Letzte Hand anlegen…'
+  ];
+  let msgIdx = 0;
+  const timer = setInterval(() => {
+    pct = Math.min(pct + (Math.random() * 6 + 2), 90);
+    pbar.style.width = pct + '%';
+    if (pct > 30 && msgIdx === 0) { document.getElementById('analyzing-msg').textContent = msgs[1]; msgIdx = 1; }
+    if (pct > 55 && msgIdx === 1) { document.getElementById('analyzing-msg').textContent = msgs[2]; msgIdx = 2; }
+    if (pct > 80 && msgIdx === 2) { document.getElementById('analyzing-msg').textContent = msgs[3]; msgIdx = 3; }
+  }, 600);
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile: app.formData,
+        images: app.uploadedImages.map(i => ({ mimeType: i.mimeType, data: i.base64 })),
+        count: parseInt(app.formData.lookCount) || 3
+      })
+    });
+
+    clearInterval(timer);
+    pbar.style.width = '100%';
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || `Server-Fehler ${response.status}`);
+    }
+
+    const data = await response.json();
+    app.generatedLooks = data.looks || [];
+
+    if (!app.generatedLooks.length) throw new Error('Die KI hat keine Looks zurückgegeben.');
+
+    renderResults();
+    showScreen('screen-results');
+
+  } catch (err) {
+    clearInterval(timer);
+    showScreen('screen-wizard');
+    updateWizard();
+    showError('Analyse fehlgeschlagen: ' + err.message);
+    console.error(err);
+  }
+}
+
+// ── Render look cards ──────────────────────────────────────────────────────
+function renderResults() {
+  const grid = document.getElementById('looks-grid');
+  grid.innerHTML = '';
+  app.generatedLooks.forEach(look => {
+    const card = document.createElement('div');
+    card.className = 'card look-card fade-in';
+    card.dataset.tags = (look.tags || []).join(',');
+    card.innerHTML = `
+      <div class="h-40 rounded-t-2xl flex items-end p-4" style="background:${look.gradient || 'linear-gradient(135deg,#795A71,#CF9775)'}">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,255,255,.75)">${look.occasion || ''}</span>
+          <h3 class="text-xl font-extrabold text-white">${look.name || 'Look ' + look.id}</h3>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="flex gap-1 flex-wrap mb-3">${(look.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <p class="text-sm mb-4 line-clamp-3" style="color:var(--sub)">${look.description || ''}</p>
+        <div class="flex items-center justify-between">
+          <span class="font-bold" style="color:var(--sand)">${look.priceRange || ''}</span>
+          <button class="btn-primary text-sm px-4 py-2" onclick="openLook(${look.id})">Details →</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Filter looks ───────────────────────────────────────────────────────────
+function filterLooks(filter, el) {
+  document.querySelectorAll('#filter-chips .chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.querySelectorAll('#looks-grid .look-card').forEach(card => {
+    const tags = card.dataset.tags || '';
+    card.style.display = (filter === 'all' || tags.includes(filter)) ? 'block' : 'none';
+  });
+}
+
+// ── Look detail overlay ────────────────────────────────────────────────────
+function openLook(id) {
+  const look = app.generatedLooks.find(l => l.id === id);
+  if (!look) return;
+  const saved = app.savedLooks.has(id);
+  document.getElementById('overlay-content').innerHTML = `
+    <div class="h-32 rounded-2xl mb-6 flex items-end p-5" style="background:${look.gradient}">
+      <div>
+        <span class="text-xs text-white opacity-70 uppercase tracking-widest">${look.occasion || ''}</span>
+        <h2 class="text-2xl font-extrabold text-white">${look.name}</h2>
+      </div>
+    </div>
+    <p class="mb-5" style="color:var(--sub)">${look.description || ''}</p>
+    ${look.fit ? `<div class="p-4 rounded-xl mb-5" style="background:var(--bg2)"><p class="text-sm"><strong>Warum dieser Schnitt:</strong> ${look.fit}</p></div>` : ''}
+    <h4 class="font-bold mb-3">Outfit-Teile</h4>
+    <div class="space-y-3 mb-5">
+      ${(look.items || []).map(item => `
+        <div class="flex items-start gap-3 p-3 rounded-xl" style="background:var(--bg2)">
+          <div class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded" style="background:var(--accent);color:white;min-width:64px;text-align:center">${item.category}</div>
+          <div>
+            <div class="font-semibold">${item.item} <span style="color:var(--sub)">· ${item.color}</span></div>
+            <div class="text-sm" style="color:var(--sub)">${item.tip}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <span class="font-bold text-lg" style="color:var(--sand)">${look.priceRange || ''}</span>
+      <div class="flex gap-2 ml-auto">
+        <div class="flex gap-1">${(look.colors || []).map(c => `<div class="w-6 h-6 rounded-full border-2" style="background:${c};border-color:var(--border)"></div>`).join('')}</div>
+        <button onclick="toggleSave(${id})" id="save-btn-${id}" class="btn-outline text-sm px-3 py-1">${saved ? '♥ Gespeichert' : '♡ Speichern'}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('look-overlay').style.display = 'flex';
+}
+function closeLookOverlay(e) {
+  if (e.target === document.getElementById('look-overlay')) {
+    document.getElementById('look-overlay').style.display = 'none';
+  }
+}
+function toggleSave(id) {
+  if (app.savedLooks.has(id)) app.savedLooks.delete(id); else app.savedLooks.add(id);
+  const btn = document.getElementById('save-btn-' + id);
+  if (btn) btn.textContent = app.savedLooks.has(id) ? '♥ Gespeichert' : '♡ Speichern';
+}
+
+// ── Chat ───────────────────────────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addChatMessage('user', msg);
+  app.chatMessages.push({ role: 'user', content: msg });
+
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  const typingDiv = document.createElement('div');
+  typingDiv.id = typingId;
+  typingDiv.className = 'flex gap-3';
+  typingDiv.innerHTML = `
+    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
+    <div class="chat-bubble ai" style="padding:14px 16px">
+      <span class="inline-flex gap-1">
+        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .0s"></span>
+        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .2s"></span>
+        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .4s"></span>
+      </span>
+    </div>`;
+  document.getElementById('chat-messages').appendChild(typingDiv);
+  scrollChat();
+
+  document.getElementById('chat-send-btn').disabled = true;
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: app.chatMessages,
+        looks: app.generatedLooks.map(l => ({ name: l.name, occasion: l.occasion, id: l.id }))
+      })
+    });
+
+    typingDiv.remove();
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Serverfehler');
+    }
+
+    const data = await response.json();
+    addChatMessage('ai', data.reply);
+    app.chatMessages.push({ role: 'assistant', content: data.reply });
+
+  } catch (err) {
+    typingDiv.remove();
+    addChatMessage('ai', '⚠️ Fehler: ' + err.message);
+  } finally {
+    document.getElementById('chat-send-btn').disabled = false;
+    input.focus();
+  }
+}
+
+function quickChat(msg) {
+  document.getElementById('chat-input').value = msg;
+  sendChat();
+}
+
+function addChatMessage(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'flex gap-3' + (role === 'user' ? ' flex-row-reverse' : '');
+  const avatar = role === 'user'
+    ? `<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 font-bold" style="background:var(--accent)">Du</div>`
+    : `<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>`;
+  div.innerHTML = avatar + `<div class="chat-bubble ${role}">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
+  container.appendChild(div);
+  scrollChat();
+}
+
+function scrollChat() {
+  const c = document.getElementById('chat-messages');
+  setTimeout(() => c.scrollTop = c.scrollHeight, 60);
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function showError(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'error-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4500);
+}
+
+// Bounce animation for typing dots
+const style = document.createElement('style');
+style.textContent = `@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }`;
+document.head.appendChild(style);
+
+// ── Init ───────────────────────────────────────────────────────────────────
+initSingleChips('chips-bodytype',  'bodyType');
+initSingleChips('chips-colortype', 'colorType');
+initMultiChips ('chips-styles',    'styles');
+initMultiChips ('chips-occasions', 'occasions');
+</script>
+</body>
+</html>
