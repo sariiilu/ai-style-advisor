@@ -1,102 +1,106 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const cors    = require('cors');
+const path    = require('path');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.GOOGLE_API_KEY;
+const GEMINI_KEY = process.env.GOOGLE_API_KEY;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));   // base64 images can be large
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Gemini client (initialised once, key from env only) ────────────────────
-function getGemini() {
-  if (!API_KEY) {
-    throw new Error('GOOGLE_API_KEY ist nicht gesetzt. Bitte in den Environment Variables hinterlegen.');
-  }
-  return new GoogleGenerativeAI(API_KEY).getGenerativeModel({
-    model: 'gemini-1.5-flash',
-    generationConfig: { temperature: 0.85, maxOutputTokens: 5000 }
+// ── Helper: call Gemini REST API directly (no npm package needed) ──────────
+async function callGemini(parts, maxTokens = 5000, temperature = 0.85) {
+  if (!GEMINI_KEY) throw new Error('GOOGLE_API_KEY ist nicht gesetzt.');
+
+  const url = `${GEMINI_URL}?key=${GEMINI_KEY}`;
+  const body = {
+    contents: [{ parts }],
+    generationConfig: { temperature, maxOutputTokens: maxTokens }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini API Fehler ${res.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return text;
 }
 
-// ── Helper: build prompt from profile ─────────────────────────────────────
+// ── Helper: style prompt ───────────────────────────────────────────────────
 function buildStylePrompt(profile, count) {
   return `Du bist ein professioneller Fashion-Stilberater. Analysiere das/die hochgeladene(n) Foto(s) und erstelle ${count} konkrete Outfit-Empfehlungen.
 
 NUTZERPROFIL:
 - Körpertyp: ${profile.bodyType || 'nicht angegeben'}
 - Farbtyp: ${profile.colorType || 'nicht angegeben'}
-- Bevorzugte Stile: ${profile.styles?.join(', ') || 'nicht angegeben'}
-- Anlässe: ${profile.occasions?.join(', ') || 'nicht angegeben'}
+- Bevorzugte Stile: ${(profile.styles || []).join(', ') || 'nicht angegeben'}
+- Anlässe: ${(profile.occasions || []).join(', ') || 'nicht angegeben'}
 - Budget: ${profile.budget || 'nicht angegeben'}
-- Lieblings-Farben: ${profile.favoriteColors || 'nicht angegeben'}
+- Lieblingsfarben: ${profile.favoriteColors || 'nicht angegeben'}
 - Vermeiden: ${profile.avoidColors || 'nicht angegeben'}
 - Besonderheiten: ${profile.specialNotes || 'keine'}
 
 AUFGABE: Erstelle exakt ${count} Outfit-Empfehlungen als JSON-Array.
 Jedes Objekt MUSS folgende Felder haben:
-{
-  "name": "Kurzer kreativer Outfit-Name (z.B. Business Chic, Weekend Vibes)",
-  "occasion": "Anlass (z.B. Business, Casual, Abend)",
-  "description": "2-3 Sätze warum dieses Outfit zum Typ passt",
-  "items": [
-    { "category": "Oberteil", "item": "Konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
-    { "category": "Hose/Rock", "item": "Konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
-    { "category": "Schuhe", "item": "Schuhtyp", "color": "Farbe", "tip": "Styling-Tipp" },
-    { "category": "Accessoires", "item": "Accessoire", "color": "Farbe", "tip": "Styling-Tipp" }
-  ],
-  "colors": ["#HEX1", "#HEX2", "#HEX3"],
-  "priceRange": "€ / €€ / €€€",
-  "fit": "Warum dieser Schnitt für den Körpertyp ideal ist"
-}
-
-Antworte NUR mit dem JSON-Array, ohne Markdown-Codeblöcke oder sonstigen Text.`;
-}
-
-// ── Helper: build parts array (text + images) ─────────────────────────────
-function buildParts(profile, images, count) {
-  const parts = [];
-  for (const img of (images || [])) {
-    // img = { mimeType: 'image/jpeg', data: '<base64>' }
-    if (img && img.data && img.mimeType) {
-      parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
-    }
+[
+  {
+    "name": "Kurzer kreativer Outfit-Name",
+    "occasion": "Anlass (z.B. Business, Casual, Abend, Date)",
+    "description": "2-3 Sätze warum dieses Outfit zum Typ passt",
+    "items": [
+      { "category": "Oberteil", "item": "konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "Hose/Rock", "item": "konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "Schuhe", "item": "Schuhtyp", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "Accessoires", "item": "Accessoire", "color": "Farbe", "tip": "Styling-Tipp" }
+    ],
+    "colors": ["#HEX1", "#HEX2", "#HEX3"],
+    "priceRange": "€ oder €€ oder €€€",
+    "fit": "Warum dieser Schnitt für den Körpertyp ideal ist"
   }
-  parts.push({ text: buildStylePrompt(profile, count) });
-  return parts;
+]
+
+Antworte NUR mit dem JSON-Array. Kein Text davor oder danach, keine Markdown-Codeblöcke.`;
 }
 
 // ── POST /api/analyze ──────────────────────────────────────────────────────
 app.post('/api/analyze', async (req, res) => {
   try {
     const { profile, images, count = 3 } = req.body;
+    if (!profile) return res.status(400).json({ error: 'Kein Profil übermittelt.' });
 
-    if (!profile) {
-      return res.status(400).json({ error: 'Kein Profil übermittelt.' });
+    // Build parts: optional images + text prompt
+    const parts = [];
+    for (const img of (images || [])) {
+      if (img?.data && img?.mimeType) {
+        parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
+      }
     }
+    parts.push({ text: buildStylePrompt(profile, parseInt(count) || 3) });
 
-    const model = getGemini();
-    const parts = buildParts(profile, images, count);
+    const text = await callGemini(parts, 6000, 0.85);
 
-    const result = await model.generateContent({ contents: [{ parts }] });
-    const text = result.response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Strip markdown code fences if present
+    // Strip markdown fences if Gemini adds them
     const clean = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     const jsonMatch = clean.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      console.error('Gemini response (no JSON found):', text.slice(0, 500));
-      return res.status(500).json({ error: 'KI-Antwort enthält kein valides JSON.' });
+      console.error('Gemini raw response:', text.slice(0, 600));
+      return res.status(500).json({ error: 'KI-Antwort enthält kein gültiges JSON. Bitte erneut versuchen.' });
     }
 
     const looks = JSON.parse(jsonMatch[0]);
-
-    // Enrich each look with id and gradient
     const enriched = looks.map((look, i) => ({
       ...look,
       id: i + 1,
@@ -108,7 +112,7 @@ app.post('/api/analyze', async (req, res) => {
 
   } catch (err) {
     console.error('Analyze error:', err.message);
-    res.status(500).json({ error: err.message || 'Interner Serverfehler' });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -116,77 +120,73 @@ app.post('/api/analyze', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, looks } = req.body;
+    if (!messages?.length) return res.status(400).json({ error: 'Keine Nachrichten.' });
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Kein Nachrichtenverlauf übermittelt.' });
-    }
+    const looksContext = looks?.length
+      ? `Die Nutzerin hat folgende Looks erhalten: ${looks.map(l => `"${l.name}" (${l.occasion})`).join(', ')}.`
+      : '';
 
-    const model = getGemini();
+    // Build a single prompt with full conversation history
+    const history = messages.map(m =>
+      `${m.role === 'user' ? 'Nutzerin' : 'StyleAI'}: ${m.content}`
+    ).join('\n\n');
 
-    const systemContext = looks?.length
-      ? `Du bist ein KI-Stilberater. Es wurden folgende Looks für die Nutzerin erstellt: ${JSON.stringify(looks.map(l => ({ name: l.name, occasion: l.occasion })))}. Beantworte Fragen zu den Outfits, gib Styling-Tipps und sei freundlich und hilfreich.`
-      : 'Du bist ein KI-Stilberater. Beantworte Fragen rund um Mode, Styling und Outfits. Sei freundlich, kompetent und konkret.';
+    const prompt = `Du bist StyleAI, ein freundlicher und kompetenter KI-Stilberater. ${looksContext}
 
-    // Build conversation history for Gemini
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
+Konversation bisher:
+${history}
 
-    const chat = model.startChat({
-      history: [
-        { role: 'user', parts: [{ text: systemContext }] },
-        { role: 'model', parts: [{ text: 'Verstanden! Ich bin bereit, dir bei allen Stilfragen zu helfen.' }] },
-        ...history
-      ]
-    });
+Antworte jetzt als StyleAI auf die letzte Nachricht der Nutzerin. Sei konkret, hilfreich und auf Deutsch.`;
 
-    const lastMessage = messages[messages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
-    const reply = result.response.candidates?.[0]?.content?.parts?.[0]?.text || 'Ich konnte keine Antwort generieren.';
+    const parts = [{ text: prompt }];
+    const reply = await callGemini(parts, 1000, 0.75);
 
-    res.json({ reply });
+    res.json({ reply: reply.trim() });
 
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.status(500).json({ error: err.message || 'Interner Serverfehler' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ── Helper: gradient from color array ─────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 function buildGradient(colors) {
-  if (!colors || colors.length === 0) return 'linear-gradient(135deg,#795A71,#CF9775)';
+  if (!colors?.length) return 'linear-gradient(135deg,#795A71,#CF9775)';
   const valid = colors.filter(c => /^#[0-9A-Fa-f]{3,8}$/.test(c));
-  if (valid.length === 0) return 'linear-gradient(135deg,#795A71,#CF9775)';
-  if (valid.length === 1) return `linear-gradient(135deg,${valid[0]},${valid[0]}cc)`;
+  if (!valid.length) return 'linear-gradient(135deg,#795A71,#CF9775)';
+  if (valid.length === 1) return `linear-gradient(135deg,${valid[0]},${valid[0]}99)`;
   return `linear-gradient(135deg,${valid.join(',')})`;
 }
 
-// ── Helper: infer tags from look data ─────────────────────────────────────
 function inferTags(look) {
   const tags = [];
   const occ = (look.occasion || '').toLowerCase();
-  if (occ.includes('business') || occ.includes('büro')) tags.push('Business');
-  if (occ.includes('casual') || occ.includes('alltag')) tags.push('Casual');
-  if (occ.includes('abend') || occ.includes('event') || occ.includes('party')) tags.push('Abend');
-  if (occ.includes('sport') || occ.includes('active')) tags.push('Sport');
+  if (occ.includes('business') || occ.includes('büro') || occ.includes('meeting')) tags.push('Business');
+  if (occ.includes('casual') || occ.includes('alltag') || occ.includes('wochenende')) tags.push('Casual');
+  if (occ.includes('abend') || occ.includes('event') || occ.includes('party') || occ.includes('feier')) tags.push('Abend');
   if (occ.includes('date') || occ.includes('romantisch')) tags.push('Date');
-  const pr = (look.priceRange || '');
+  if (occ.includes('sport')) tags.push('Sport');
+  const pr = look.priceRange || '';
   if (pr.includes('€€€')) tags.push('Premium');
   else if (pr.includes('€€')) tags.push('Mid-Range');
-  else if (pr.includes('€')) tags.push('Budget');
+  else if (pr === '€') tags.push('Budget');
   return tags.length ? tags : ['Everyday'];
 }
 
-// ── Fallback: serve index.html for all non-API routes ─────────────────────
-app.get('*', (req, res) => {
+// ── Health check (useful for Render) ──────────────────────────────────────
+app.get('/health', (_, res) => res.json({ status: 'ok', apiKey: !!GEMINI_KEY }));
+
+// ── Catch-all → index.html ─────────────────────────────────────────────────
+app.get('*', (_, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ── Start server ───────────────────────────────────────────────────────────
+// ── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`✅ AI Style Advisor läuft auf Port ${PORT}`);
-  if (!API_KEY) {
-    console.warn('⚠️  GOOGLE_API_KEY nicht gesetzt — KI-Funktionen werden nicht funktionieren!');
+  console.log(`✅ StyleAI Server läuft auf Port ${PORT}`);
+  if (!GEMINI_KEY) {
+    console.warn('⚠️  GOOGLE_API_KEY fehlt! KI-Funktionen sind deaktiviert.');
+  } else {
+    console.log('🔑 Gemini API Key: gesetzt');
   }
 });
