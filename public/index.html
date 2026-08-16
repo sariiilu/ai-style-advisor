@@ -744,6 +744,16 @@ async function runAnalysis(mode) {
 }
 
 // ── Render results ─────────────────────────────────────────────────────────
+function buildImagePrompt(look) {
+  const items = (look.items||[]).slice(0,3).map(i=>i.item).join(', ');
+  const colors = (look.items||[]).slice(0,3).map(i=>i.color).filter(Boolean).join(', ');
+  const occasion = look.occasion || 'casual';
+  return encodeURIComponent(
+    `fashion outfit flatlay, ${items}, colors: ${colors}, ${occasion} style, ` +
+    `modern trendy 2026, clean white background, professional product photography, soft lighting, top view`
+  );
+}
+
 function renderResults(mode) {
   const isWardrobe = mode === 'wardrobe';
   document.getElementById('results-header').innerHTML = isWardrobe
@@ -761,12 +771,21 @@ function renderResults(mode) {
       ? `${ownCount?`<span class="tag" style="background:#e8f5e9;color:#2e7d32">✅ ${ownCount} vorhanden</span>`:''}${buyCount?`<span class="tag" style="background:#fff3e0;color:#e65100">🛍️ ${buyCount} kaufen</span>`:''}`
       : `<span class="tag" style="background:#f3e5f5;color:#6a1b9a">✨ Generator</span>`;
 
+    const imgPrompt = buildImagePrompt(look);
+    const imgUrl = `https://image.pollinations.ai/prompt/${imgPrompt}?width=600&height=400&nologo=true&model=flux`;
+
     card.innerHTML=`
-      <div class="h-40 rounded-t-2xl flex items-end p-4" style="background:${look.gradient||'linear-gradient(135deg,#795A71,#CF9775)'}">
-        <div class="w-full">
-          <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,255,255,.75)">${look.occasion||''}</span>
+      <div class="rounded-t-2xl overflow-hidden" style="height:200px;background:${look.gradient||'linear-gradient(135deg,#795A71,#CF9775)'};position:relative">
+        <img src="${imgUrl}" alt="${look.name}"
+          style="width:100%;height:100%;object-fit:cover;transition:opacity .4s"
+          onload="this.style.opacity=1"
+          onerror="this.style.display='none'"
+          style="opacity:0">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 60%)"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 16px">
+          <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,255,255,.8)">${look.occasion||''}</span>
           <h3 class="text-xl font-extrabold text-white">${look.name||'Look '+look.id}</h3>
-          ${look.trend?`<p class="text-xs mt-1" style="color:rgba(255,255,255,.8)">✨ ${look.trend}</p>`:''}
+          ${look.trend?`<p class="text-xs mt-1" style="color:rgba(255,255,255,.75)">✨ ${look.trend}</p>`:''}
         </div>
       </div>
       <div class="p-5">
@@ -807,9 +826,17 @@ function openLook(id) {
       </div>
     </div>`).join('');
 
+  const overlayImgPrompt = buildImagePrompt(look);
+  const overlayImgUrl = `https://image.pollinations.ai/prompt/${overlayImgPrompt}?width=800&height=500&nologo=true&model=flux`;
+
   document.getElementById('overlay-content').innerHTML=`
-    <div class="h-32 rounded-2xl mb-5 flex items-end p-5" style="background:${look.gradient}">
-      <div class="w-full">
+    <div class="rounded-2xl mb-5 overflow-hidden" style="height:220px;background:${look.gradient};position:relative">
+      <img src="${overlayImgUrl}" alt="${look.name}"
+        style="width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s"
+        onload="this.style.opacity=1"
+        onerror="this.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6) 0%,transparent 55%)"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 20px">
         <span class="text-xs text-white opacity-70 uppercase tracking-widest">${look.occasion||''}</span>
         <h2 class="text-2xl font-extrabold text-white">${look.name}</h2>
         ${look.trend?`<p class="text-xs mt-1 text-white opacity-80">✨ ${look.trend}</p>`:''}
