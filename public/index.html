@@ -3,24 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KI Stil-Berater</title>
+<title>StyleAI — KI Stil-Berater</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  darkMode: ['attribute', '[data-theme="dark"]'],
-  theme: {
-    extend: {
-      colors: {
-        mauve:  { DEFAULT:'#D2C0C2', dark:'#a08890' },
-        slate2: { DEFAULT:'#8CB6A5', dark:'#5a8a78' },
-        sand:   { DEFAULT:'#CF9775', dark:'#a06845' },
-        purple2:{ DEFAULT:'#795A71', dark:'#5a3f54' },
-        plum:   { DEFAULT:'#472C45', dark:'#2d1a2c' },
-      }
-    }
-  }
-}
-</script>
 <style>
   :root {
     --bg:#F5F2F8; --bg2:#ECE6F2; --card:#FFFFFF;
@@ -34,211 +18,208 @@ tailwind.config = {
     --accent:#9B7A96; --sand:#D4A882; --green:#72A882;
     --shadow: 0 4px 24px rgba(0,0,0,0.35);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; transition: background .3s, color .3s; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
-  .btn-primary { background: var(--accent); color: #fff; border-radius: 10px; padding: 12px 28px; font-weight: 600; cursor: pointer; border: none; transition: opacity .2s, transform .1s; }
-  .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
-  .btn-outline { background: transparent; color: var(--accent); border: 2px solid var(--accent); border-radius: 10px; padding: 10px 24px; font-weight: 600; cursor: pointer; transition: background .2s; }
-  .btn-outline:hover { background: var(--accent); color: #fff; }
-  .screen { display: none; }
-  .screen.active { display: block; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; cursor: pointer; font-size: 14px; transition: all .2s; background: var(--card); color: var(--text); }
-  .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .step-dot { width:10px; height:10px; border-radius:50%; background: var(--border); transition: background .3s; }
-  .step-dot.active { background: var(--accent); }
-  input, select, textarea {
-    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
-    border-radius: 10px; background: var(--bg2); color: var(--text);
-    font-size: 15px; transition: border-color .2s;
-  }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-  .look-card { cursor: pointer; transition: transform .2s, box-shadow .2s; }
-  .look-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(121,90,113,0.18); }
-  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--bg2); color: var(--sub); }
-  .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 15px; line-height: 1.5; word-break: break-word; }
-  .chat-bubble.user { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-  .chat-bubble.ai { background: var(--card); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
-  .drop-zone { border: 2.5px dashed var(--border); border-radius: 16px; padding: 40px 20px; text-align: center; transition: border-color .2s, background .2s; cursor: pointer; }
-  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: var(--bg2); }
-  .progress-bar { height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); transition: width .4s ease; }
-  .loader { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .fade-in { animation: fadeIn .5s ease; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
-  .overlay { position:fixed; inset:0; background: rgba(0,0,0,.55); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .overlay-card { max-width: 680px; width:100%; max-height:90vh; overflow-y:auto; }
-  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  .error-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#c0392b; color:#fff; padding:12px 24px; border-radius:10px; font-weight:600; z-index:200; box-shadow:0 4px 16px rgba(0,0,0,.25); animation: fadeIn .3s ease; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;transition:background .3s,color .3s}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+  .btn-primary{background:var(--accent);color:#fff;border-radius:10px;padding:12px 28px;font-weight:600;cursor:pointer;border:none;transition:opacity .2s,transform .1s;display:inline-block}
+  .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+  .btn-outline{background:transparent;color:var(--accent);border:2px solid var(--accent);border-radius:10px;padding:10px 24px;font-weight:600;cursor:pointer;transition:all .2s}
+  .btn-outline:hover{background:var(--accent);color:#fff}
+  .screen{display:none}.screen.active{display:block}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;cursor:pointer;font-size:14px;transition:all .2s;background:var(--card);color:var(--text)}
+  .chip.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .step-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:background .3s}
+  .step-dot.active{background:var(--accent)}
+  input,select,textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text);font-size:15px;transition:border-color .2s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  .look-card{cursor:pointer;transition:transform .2s,box-shadow .2s}
+  .look-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(121,90,113,0.18)}
+  .tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--bg2);color:var(--sub)}
+  .chat-bubble{max-width:80%;padding:12px 16px;border-radius:16px;font-size:15px;line-height:1.5;word-break:break-word}
+  .chat-bubble.user{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .chat-bubble.ai{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+  .drop-zone{border:2.5px dashed var(--border);border-radius:16px;padding:40px 20px;text-align:center;transition:border-color .2s,background .2s;cursor:pointer}
+  .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--bg2)}
+  .progress-bar{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden}
+  .progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
+  .loader{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .fade-in{animation:fadeIn .5s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .overlay-card{max-width:700px;width:100%;max-height:90vh;overflow-y:auto}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .error-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:12px 24px;border-radius:10px;font-weight:600;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.25);animation:fadeIn .3s ease}
+  .mode-card{border:2px solid var(--border);border-radius:20px;padding:32px 24px;cursor:pointer;transition:all .25s;background:var(--card);text-align:center}
+  .mode-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 32px rgba(121,90,113,0.18)}
+  .mode-card.selected{border-color:var(--accent);background:var(--bg2)}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;letter-spacing:.05em}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════
+     NAV BAR (shared)
+═══════════════════════════════════════════ -->
+<template id="nav-tpl">
+  <nav class="flex items-center justify-between px-6 py-4" style="border-bottom:1px solid var(--border);background:var(--bg)">
+    <button onclick="showScreen('screen-landing')" class="flex items-center gap-2 font-bold text-xl" style="color:var(--accent);background:none;border:none;cursor:pointer">
+      <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="14" fill="currentColor" opacity=".15"/><path d="M9 8h10l-2 7H11L9 8zm2 9a3 3 0 106 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+      StyleAI
+    </button>
+    <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+      <svg class="sun-icon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg class="moon-icon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+  </nav>
+</template>
+
+
+<!-- ═══════════════════════════════════════
      SCREEN 1 — LANDING
-═══════════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <div id="screen-landing" class="screen active">
   <div class="min-h-screen flex flex-col">
-    <!-- Nav -->
-    <nav class="flex items-center justify-between px-8 py-5">
-      <div class="flex items-center gap-2 font-bold text-xl" style="color:var(--accent)">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="14" fill="currentColor" opacity=".15"/><path d="M9 8h10l-2 7H11L9 8zm2 9a3 3 0 106 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+    <nav class="flex items-center justify-between px-6 py-5">
+      <span class="flex items-center gap-2 font-bold text-xl" style="color:var(--accent)">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="14" fill="currentColor" opacity=".15"/><path d="M9 8h10l-2 7H11L9 8zm2 9a3 3 0 106 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
         StyleAI
-      </div>
-      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)" title="Dark Mode">
-        <svg id="icon-sun" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg id="icon-moon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </span>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+        <svg class="sun-icon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
     </nav>
 
-    <!-- Hero -->
-    <div class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16"
-         style="background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%)">
-      <div class="mb-6 p-5 rounded-full inline-block" style="background:linear-gradient(135deg,#795A71,#CF9775)">
-        <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><path d="M16 12h16l-4 14H20L16 12z" fill="white" opacity=".9"/><path d="M20 26a8 8 0 1016 0" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="24" cy="8" r="3" fill="white" opacity=".7"/></svg>
+    <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center" style="background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 100%)">
+      <div class="mb-6 p-5 rounded-full" style="background:linear-gradient(135deg,#795A71,#CF9775);display:inline-block">
+        <svg width="48" height="48" fill="none" viewBox="0 0 48 48"><path d="M16 12h16l-4 14H20L16 12z" fill="white" opacity=".9"/><path d="M20 26a8 8 0 1016 0" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
       </div>
-      <h1 class="text-5xl font-extrabold mb-4" style="color:var(--text)">
-        Dein KI <span style="color:var(--accent)">Kleiderschrank-Stylist</span>
-      </h1>
-      <p class="text-lg mb-10 max-w-lg" style="color:var(--sub)">
-        Fotografiere deine Kleidungsstücke — die KI erstellt daraus trendige Outfits und zeigt dir was noch fehlt.
-      </p>
-      <button class="btn-primary text-lg px-10 py-4" onclick="showScreen('screen-wizard')">
-        Kleiderschrank analysieren →
-      </button>
-      <p class="mt-4 text-sm" style="color:var(--sub)">DSGVO-konform · Fotos werden nicht gespeichert</p>
+      <h1 class="text-5xl font-extrabold mb-3" style="color:var(--text)">Dein KI <span style="color:var(--accent)">Stil-Berater</span></h1>
+      <p class="text-lg mb-12 max-w-lg" style="color:var(--sub)">Wähle deinen Modus — KI-powered, trendbewusst, persönlich.</p>
 
-      <!-- Feature chips -->
-      <div class="flex flex-wrap justify-center gap-3 mt-12">
-        <span class="chip">👗 Kleiderschrank-Analyse</span>
-        <span class="chip">✨ 2026/2027 Trends</span>
-        <span class="chip">🛍️ Kaufempfehlungen</span>
-        <span class="chip">💬 KI-Chat</span>
+      <!-- Mode Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mb-10">
+
+        <!-- Mode 1: Kleiderschrank -->
+        <div class="mode-card" onclick="startMode('wardrobe')">
+          <div class="text-5xl mb-4">👗</div>
+          <span class="badge mb-3" style="background:#e8f5e9;color:#2e7d32">Kleiderschrank</span>
+          <h3 class="text-xl font-bold mt-2 mb-3">Mein Kleiderschrank</h3>
+          <p style="color:var(--sub);font-size:14px;line-height:1.6">Fotografiere deine Kleidungsstücke. Die KI erkennt was du hast, kombiniert Outfits aus deinen Teilen und zeigt dir was noch fehlt.</p>
+          <div class="mt-5 pt-4" style="border-top:1px solid var(--border)">
+            <div class="flex flex-col gap-1 text-sm" style="color:var(--sub)">
+              <span>✅ Outfits aus deinen eigenen Teilen</span>
+              <span>🛍️ Max. 2 Kauftipps pro Outfit</span>
+              <span>✨ Passend zu Trends 2026/2027</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode 2: Outfit Generator -->
+        <div class="mode-card" onclick="startMode('generator')">
+          <div class="text-5xl mb-4">✨</div>
+          <span class="badge mb-3" style="background:#f3e5f5;color:#6a1b9a">Outfit Generator</span>
+          <h3 class="text-xl font-bold mt-2 mb-3">Outfit Generator</h3>
+          <p style="color:var(--sub);font-size:14px;line-height:1.6">Sag der KI deinen Körpertyp, Farbtyp und Anlass. Sie erstellt dir komplette Trend-Outfits zum Einkaufen — ohne eigene Fotos.</p>
+          <div class="mt-5 pt-4" style="border-top:1px solid var(--border)">
+            <div class="flex flex-col gap-1 text-sm" style="color:var(--sub)">
+              <span>👤 Basierend auf Körpertyp & Farbtyp</span>
+              <span>🎯 Für deinen Anlass optimiert</span>
+              <span>🛒 Komplett-Outfits zum Kaufen</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <p class="text-sm" style="color:var(--sub)">🔒 DSGVO-konform · Fotos werden nicht gespeichert · Kostenlos</p>
     </div>
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
-     SCREEN 2 — WIZARD (4 Schritte)
-═══════════════════════════════════════════════════════ -->
-<div id="screen-wizard" class="screen">
+<!-- ═══════════════════════════════════════
+     SCREEN 2A — WIZARD KLEIDERSCHRANK
+═══════════════════════════════════════════ -->
+<div id="screen-wardrobe" class="screen">
   <div class="min-h-screen flex flex-col">
-    <nav class="flex items-center justify-between px-8 py-5">
-      <button onclick="showScreen('screen-landing')" class="flex items-center gap-2 font-bold text-lg" style="color:var(--accent)">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        StyleAI
-      </button>
-      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
-        <svg id="icon-sun2" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg id="icon-moon2" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="border-bottom:1px solid var(--border);background:var(--bg)">
+      <button onclick="showScreen('screen-landing')" class="flex items-center gap-2 font-semibold" style="color:var(--accent);background:none;border:none;cursor:pointer">← Zurück</button>
+      <span class="font-bold text-lg" style="color:var(--accent)">👗 Kleiderschrank</span>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+        <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
     </nav>
 
     <div class="flex-1 flex items-center justify-center px-4 py-8">
       <div class="card p-8 w-full max-w-xl fade-in">
-        <!-- Step indicator -->
-        <div class="flex justify-between items-center mb-8">
-          <span id="step-label" class="text-sm font-semibold" style="color:var(--accent)">Schritt 1 von 4</span>
-          <div class="flex gap-2">
-            <div class="step-dot active" id="dot-1"></div>
-            <div class="step-dot" id="dot-2"></div>
-            <div class="step-dot" id="dot-3"></div>
-            <div class="step-dot" id="dot-4"></div>
+        <!-- Steps -->
+        <div class="flex justify-between items-center mb-6">
+          <span id="w-step-label" class="text-sm font-semibold" style="color:var(--accent)">Schritt 1 von 3</span>
+          <div class="flex gap-2" id="w-dots">
+            <div class="step-dot active" id="w-dot-1"></div>
+            <div class="step-dot" id="w-dot-2"></div>
+            <div class="step-dot" id="w-dot-3"></div>
           </div>
         </div>
-        <div class="progress-bar mb-8"><div class="progress-fill" id="progress-fill" style="width:25%"></div></div>
+        <div class="progress-bar mb-8"><div class="progress-fill" id="w-progress" style="width:33%"></div></div>
 
-        <!-- ── Step 1: Persönliches ── -->
-        <div id="wizard-step-1" class="wizard-step">
-          <h2 class="text-2xl font-bold mb-2">Dein Körperprofil</h2>
-          <p class="mb-6" style="color:var(--sub)">Diese Infos helfen der KI, Schnitte zu empfehlen die zu dir passen.</p>
+        <!-- Step W1: Kurzes Profil -->
+        <div id="w-step-1" class="wstep">
+          <h2 class="text-2xl font-bold mb-2">Kurzes Profil</h2>
+          <p class="mb-6" style="color:var(--sub)">Damit die KI Schnitte und Farben optimal auf dich abstimmen kann.</p>
           <div class="space-y-4">
             <div>
-              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Körpertyp</label>
-              <div class="flex flex-wrap gap-2" id="chips-bodytype">
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Körpertyp (optional)</label>
+              <div class="flex flex-wrap gap-2" id="wchips-bodytype">
                 <span class="chip" data-val="Apfelform">🍎 Apfel</span>
                 <span class="chip" data-val="Birnenform">🍐 Birne</span>
                 <span class="chip" data-val="Sanduhrform">⌛ Sanduhr</span>
                 <span class="chip" data-val="Rechteckig">▬ Rechteck</span>
-                <span class="chip" data-val="Dreieck invertiert">△ Invertiertes Dreieck</span>
+                <span class="chip" data-val="Invertiertes Dreieck">△ Inv. Dreieck</span>
               </div>
             </div>
             <div>
-              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Farbtyp</label>
-              <div class="flex flex-wrap gap-2" id="chips-colortype">
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Farbtyp (optional)</label>
+              <div class="flex flex-wrap gap-2" id="wchips-colortype">
                 <span class="chip" data-val="Frühlingstyp">🌸 Frühling</span>
                 <span class="chip" data-val="Sommertyp">☀️ Sommer</span>
                 <span class="chip" data-val="Herbsttyp">🍂 Herbst</span>
                 <span class="chip" data-val="Wintertyp">❄️ Winter</span>
-                <span class="chip" data-val="Unbekannt">❓ Weiß nicht</span>
               </div>
             </div>
             <div>
-              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Lieblingsfarben</label>
-              <input type="text" id="f-favoriteColors" placeholder="z.B. Dunkelblau, Camel, Weiß ...">
-            </div>
-            <div>
-              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Farben / Muster vermeiden</label>
-              <input type="text" id="f-avoidColors" placeholder="z.B. Orange, Neon, Karomuster ...">
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Step 2: Stil ── -->
-        <div id="wizard-step-2" class="wizard-step" style="display:none">
-          <h2 class="text-2xl font-bold mb-2">Dein Stil</h2>
-          <p class="mb-6" style="color:var(--sub)">Wähle alle Stile die dich ansprechen (Mehrfachauswahl).</p>
-          <div class="space-y-4">
-            <div class="flex flex-wrap gap-2" id="chips-styles">
-              <span class="chip" data-val="Klassisch">👔 Klassisch</span>
-              <span class="chip" data-val="Business">💼 Business</span>
-              <span class="chip" data-val="Casual">👕 Casual</span>
-              <span class="chip" data-val="Boho">🌻 Boho</span>
-              <span class="chip" data-val="Minimalistisch">⬜ Minimalistisch</span>
-              <span class="chip" data-val="Elegant">✨ Elegant</span>
-              <span class="chip" data-val="Sportlich">🏃 Sportlich</span>
-              <span class="chip" data-val="Streetwear">🧢 Streetwear</span>
-              <span class="chip" data-val="Feminin">🌸 Feminin</span>
-              <span class="chip" data-val="Edgy">⚡ Edgy</span>
-            </div>
-            <div>
-              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Budget pro Outfit</label>
-              <select id="f-budget">
-                <option value="">Bitte wählen</option>
-                <option value="Unter 50€">Unter 50 €</option>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Budget für Ergänzungskäufe</label>
+              <select id="wf-budget">
+                <option value="">Egal</option>
+                <option value="unter 50€">Unter 50 €</option>
                 <option value="50–150€">50–150 €</option>
                 <option value="150–300€">150–300 €</option>
-                <option value="Über 300€">Über 300 €</option>
+                <option value="über 300€">Über 300 €</option>
               </select>
-            </div>
-            <div>
-              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Besondere Hinweise (optional)</label>
-              <textarea id="f-specialNotes" rows="3" placeholder="z.B. Schwangerschaft, Tattoos, religiöse Kleidungsvorschriften, Größe XL, ..."></textarea>
             </div>
           </div>
         </div>
 
-        <!-- ── Step 3: Anlässe ── -->
-        <div id="wizard-step-3" class="wizard-step" style="display:none">
-          <h2 class="text-2xl font-bold mb-2">Anlässe</h2>
-          <p class="mb-6" style="color:var(--sub)">Für welche Situationen brauchst du Outfit-Inspiration?</p>
+        <!-- Step W2: Anlässe + Looks -->
+        <div id="w-step-2" class="wstep" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Für welche Anlässe?</h2>
+          <p class="mb-6" style="color:var(--sub)">Die KI erstellt Outfits passend zu deinen gewünschten Situationen.</p>
           <div class="space-y-4">
-            <div class="flex flex-wrap gap-2" id="chips-occasions">
+            <div class="flex flex-wrap gap-2" id="wchips-occasions">
               <span class="chip" data-val="Büro/Business">🏢 Büro</span>
-              <span class="chip" data-val="Alltag/Casual">☕ Alltag</span>
+              <span class="chip" data-val="Alltag">☕ Alltag</span>
               <span class="chip" data-val="Abendveranstaltung">🥂 Abend</span>
               <span class="chip" data-val="Date">💑 Date</span>
+              <span class="chip" data-val="Wochenende">🛋️ Wochenende</span>
               <span class="chip" data-val="Sport/Outdoor">🏃 Sport</span>
               <span class="chip" data-val="Reise">✈️ Reise</span>
-              <span class="chip" data-val="Hochzeit/Feier">💍 Hochzeit</span>
-              <span class="chip" data-val="Wochenende">🛋️ Wochenende</span>
+              <span class="chip" data-val="Hochzeit/Feier">💍 Feier</span>
             </div>
             <div>
-              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Wie viele Looks soll die KI erstellen?</label>
-              <select id="f-lookCount">
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Wie viele Outfit-Kombinationen?</label>
+              <select id="wf-lookcount">
                 <option value="2">2 Looks</option>
                 <option value="3" selected>3 Looks</option>
                 <option value="4">4 Looks</option>
@@ -248,32 +229,32 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- ── Step 4: Fotos ── -->
-        <div id="wizard-step-4" class="wizard-step" style="display:none">
-          <h2 class="text-2xl font-bold mb-2">Deine Kleidungsstücke fotografieren</h2>
-          <p class="mb-2" style="color:var(--sub)">Fotografiere einzelne Teile oder deinen ganzen Kleiderschrank. Die KI erkennt was du hast und kombiniert daraus Outfits.</p>
-          <p class="text-xs mb-6 p-3 rounded-lg" style="background:var(--bg2); color:var(--sub)">💡 Tipp: Je mehr Teile du fotografierst, desto besser die Outfit-Kombinationen. Lege Kleidung flach auf einen hellen Untergrund oder hänge sie auf. 🔒 DSGVO: Fotos werden nicht gespeichert.</p>
+        <!-- Step W3: Fotos -->
+        <div id="w-step-3" class="wstep" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Deine Kleidungsstücke</h2>
+          <p class="mb-2" style="color:var(--sub)">Fotografiere einzelne Teile oder deinen ganzen Kleiderschrank (bis zu 5 Fotos).</p>
+          <p class="text-xs mb-5 p-3 rounded-lg" style="background:var(--bg2);color:var(--sub)">💡 Tipp: Teile einzeln auf hellem Untergrund oder auf einem Kleiderbügel fotografieren liefert die besten Ergebnisse. 🔒 Fotos werden nur für diese Analyse verwendet.</p>
 
-          <div class="drop-zone mb-4" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-            <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--sub); margin:0 auto 12px"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 20M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <div class="drop-zone mb-4" id="w-drop-zone" onclick="document.getElementById('w-file-input').click()" ondragover="onDragOver(event,'w-drop-zone')" ondragleave="onDragLeave('w-drop-zone')" ondrop="onDrop(event,'w-drop-zone')">
+            <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--sub);margin:0 auto 10px"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 20M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <p style="color:var(--sub)">Kleidungsfotos ablegen oder <strong style="color:var(--accent)">klicken</strong></p>
-            <p class="text-sm mt-1" style="color:var(--sub)">Blusen · Hosen · Röcke · Schuhe · Accessoires · JPG/PNG/WEBP · max. 10 MB</p>
+            <p class="text-sm mt-1" style="color:var(--sub)">Blusen · Hosen · Röcke · Schuhe · Accessoires · max. 10 MB</p>
           </div>
-          <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFiles(event.target.files)">
-          <div id="image-preview" class="grid grid-cols-3 gap-3 mt-2"></div>
+          <input type="file" id="w-file-input" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFiles(event.target.files)">
+          <div id="w-image-preview" class="grid grid-cols-3 gap-3 mt-2"></div>
 
-          <div class="mt-6 p-4 rounded-lg" style="background:var(--bg2)">
+          <div class="mt-5 p-4 rounded-lg" style="background:var(--bg2)">
             <label class="flex items-start gap-3 cursor-pointer">
-              <input type="checkbox" id="dsgvo-check" class="mt-1 w-4 h-4 flex-shrink-0" style="width:16px;height:16px">
-              <span class="text-sm" style="color:var(--sub)">Ich stimme zu, dass meine Fotos und Profildaten einmalig zur KI-Analyse verwendet und danach nicht gespeichert werden.</span>
+              <input type="checkbox" id="w-dsgvo" class="mt-1 flex-shrink-0" style="width:16px;height:16px">
+              <span class="text-sm" style="color:var(--sub)">Ich stimme zu, dass meine Fotos einmalig zur KI-Analyse verwendet und danach nicht gespeichert werden (DSGVO).</span>
             </label>
           </div>
         </div>
 
-        <!-- Nav buttons -->
+        <!-- Nav -->
         <div class="flex justify-between mt-8">
-          <button id="btn-back" class="btn-outline" onclick="wizardBack()" style="display:none">← Zurück</button>
-          <button id="btn-next" class="btn-primary ml-auto" onclick="wizardNext()">Weiter →</button>
+          <button id="w-btn-back" class="btn-outline" onclick="wWizardBack()" style="display:none">← Zurück</button>
+          <button id="w-btn-next" class="btn-primary ml-auto" onclick="wWizardNext()">Weiter →</button>
         </div>
       </div>
     </div>
@@ -281,40 +262,189 @@ tailwind.config = {
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════
+     SCREEN 2B — WIZARD OUTFIT GENERATOR
+═══════════════════════════════════════════ -->
+<div id="screen-generator" class="screen">
+  <div class="min-h-screen flex flex-col">
+    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="border-bottom:1px solid var(--border);background:var(--bg)">
+      <button onclick="showScreen('screen-landing')" class="flex items-center gap-2 font-semibold" style="color:var(--accent);background:none;border:none;cursor:pointer">← Zurück</button>
+      <span class="font-bold text-lg" style="color:var(--accent)">✨ Outfit Generator</span>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+        <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </nav>
+
+    <div class="flex-1 flex items-center justify-center px-4 py-8">
+      <div class="card p-8 w-full max-w-xl fade-in">
+        <div class="flex justify-between items-center mb-6">
+          <span id="g-step-label" class="text-sm font-semibold" style="color:var(--accent)">Schritt 1 von 4</span>
+          <div class="flex gap-2">
+            <div class="step-dot active" id="g-dot-1"></div>
+            <div class="step-dot" id="g-dot-2"></div>
+            <div class="step-dot" id="g-dot-3"></div>
+            <div class="step-dot" id="g-dot-4"></div>
+          </div>
+        </div>
+        <div class="progress-bar mb-8"><div class="progress-fill" id="g-progress" style="width:25%"></div></div>
+
+        <!-- Step G1: Körper & Farbe -->
+        <div id="g-step-1" class="gstep">
+          <h2 class="text-2xl font-bold mb-2">Körper & Farbtyp</h2>
+          <p class="mb-6" style="color:var(--sub)">Die KI wählt Schnitte und Farben die dich optimal in Szene setzen.</p>
+          <div class="space-y-4">
+            <div>
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Körpertyp</label>
+              <div class="flex flex-wrap gap-2" id="gchips-bodytype">
+                <span class="chip" data-val="Apfelform">🍎 Apfel</span>
+                <span class="chip" data-val="Birnenform">🍐 Birne</span>
+                <span class="chip" data-val="Sanduhrform">⌛ Sanduhr</span>
+                <span class="chip" data-val="Rechteckig">▬ Rechteck</span>
+                <span class="chip" data-val="Invertiertes Dreieck">△ Inv. Dreieck</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-2 block" style="color:var(--sub)">Farbtyp</label>
+              <div class="flex flex-wrap gap-2" id="gchips-colortype">
+                <span class="chip" data-val="Frühlingstyp">🌸 Frühling — warm, hell</span>
+                <span class="chip" data-val="Sommertyp">☀️ Sommer — kühl, gedämpft</span>
+                <span class="chip" data-val="Herbsttyp">🍂 Herbst — warm, tief</span>
+                <span class="chip" data-val="Wintertyp">❄️ Winter — kühl, kontrastreich</span>
+                <span class="chip" data-val="Unbekannt">❓ Weiß nicht</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Lieblingsfarben (optional)</label>
+              <input type="text" id="gf-favoriteColors" placeholder="z.B. Dunkelblau, Camel, Cremeweiß ...">
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Vermeiden (optional)</label>
+              <input type="text" id="gf-avoidColors" placeholder="z.B. Orange, Neon, Karomuster ...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step G2: Stil -->
+        <div id="g-step-2" class="gstep" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Dein Stil</h2>
+          <p class="mb-6" style="color:var(--sub)">Wähle alles was dich anspricht — Mehrfachauswahl möglich.</p>
+          <div class="flex flex-wrap gap-2" id="gchips-styles">
+            <span class="chip" data-val="Klassisch">👔 Klassisch</span>
+            <span class="chip" data-val="Business">💼 Business</span>
+            <span class="chip" data-val="Casual">👕 Casual</span>
+            <span class="chip" data-val="Boho">🌻 Boho</span>
+            <span class="chip" data-val="Minimalistisch">⬜ Minimalistisch</span>
+            <span class="chip" data-val="Elegant">✨ Elegant</span>
+            <span class="chip" data-val="Sportlich">🏃 Sportlich</span>
+            <span class="chip" data-val="Streetwear">🧢 Streetwear</span>
+            <span class="chip" data-val="Feminin">🌸 Feminin</span>
+            <span class="chip" data-val="Edgy">⚡ Edgy</span>
+            <span class="chip" data-val="Romantisch">🌹 Romantisch</span>
+            <span class="chip" data-val="Preppy">🎓 Preppy</span>
+          </div>
+        </div>
+
+        <!-- Step G3: Anlass & Budget -->
+        <div id="g-step-3" class="gstep" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Anlass & Budget</h2>
+          <p class="mb-6" style="color:var(--sub)">Für welche Situationen brauchst du Outfits?</p>
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-2" id="gchips-occasions">
+              <span class="chip" data-val="Büro/Business">🏢 Büro</span>
+              <span class="chip" data-val="Alltag">☕ Alltag</span>
+              <span class="chip" data-val="Abendveranstaltung">🥂 Abend</span>
+              <span class="chip" data-val="Date">💑 Date</span>
+              <span class="chip" data-val="Wochenende">🛋️ Wochenende</span>
+              <span class="chip" data-val="Sport/Outdoor">🏃 Sport</span>
+              <span class="chip" data-val="Reise">✈️ Reise</span>
+              <span class="chip" data-val="Hochzeit/Feier">💍 Feier</span>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Budget pro Outfit</label>
+              <select id="gf-budget">
+                <option value="">Egal</option>
+                <option value="unter 50€">Unter 50 €</option>
+                <option value="50–150€">50–150 €</option>
+                <option value="150–300€">150–300 €</option>
+                <option value="über 300€">Über 300 €</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Besondere Hinweise (optional)</label>
+              <textarea id="gf-notes" rows="2" placeholder="z.B. Größe XL, mag keine engen Hosen, Schwangerschaft ..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step G4: Anzahl + optionales Selfie -->
+        <div id="g-step-4" class="gstep" style="display:none">
+          <h2 class="text-2xl font-bold mb-2">Fast fertig!</h2>
+          <p class="mb-6" style="color:var(--sub)">Wie viele Outfit-Ideen möchtest du? Optional: lade ein Selfie hoch damit die KI deinen Typ besser einschätzen kann.</p>
+          <div class="space-y-4">
+            <div>
+              <label class="text-sm font-semibold mb-1 block" style="color:var(--sub)">Anzahl Outfits</label>
+              <select id="gf-lookcount">
+                <option value="2">2 Outfits</option>
+                <option value="3" selected>3 Outfits</option>
+                <option value="4">4 Outfits</option>
+                <option value="5">5 Outfits</option>
+              </select>
+            </div>
+            <div>
+              <p class="text-sm font-semibold mb-2" style="color:var(--sub)">Selfie hochladen (optional)</p>
+              <div class="drop-zone" id="g-drop-zone" onclick="document.getElementById('g-file-input').click()" ondragover="onDragOver(event,'g-drop-zone')" ondragleave="onDragLeave('g-drop-zone')" ondrop="onDrop(event,'g-drop-zone')" style="padding:20px">
+                <p style="color:var(--sub);font-size:14px">📸 Selfie hochladen für bessere Ergebnisse</p>
+              </div>
+              <input type="file" id="g-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleFilesGenerator(event.target.files)">
+              <div id="g-image-preview" class="mt-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <div class="flex justify-between mt-8">
+          <button id="g-btn-back" class="btn-outline" onclick="gWizardBack()" style="display:none">← Zurück</button>
+          <button id="g-btn-next" class="btn-primary ml-auto" onclick="gWizardNext()">Weiter →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
      SCREEN 3 — ANALYZING
-═══════════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <div id="screen-analyzing" class="screen">
   <div class="min-h-screen flex flex-col items-center justify-center px-6 text-center">
     <div class="loader mb-8"></div>
-    <h2 class="text-2xl font-bold mb-3">KI analysiert dein Stil-Profil…</h2>
-    <p id="analyzing-msg" class="mb-4" style="color:var(--sub); max-width:380px">Bilder werden verarbeitet und Outfit-Empfehlungen erstellt. Das dauert 10–30 Sekunden.</p>
+    <h2 class="text-2xl font-bold mb-3" id="analyzing-title">KI analysiert…</h2>
+    <p id="analyzing-msg" class="mb-6" style="color:var(--sub);max-width:380px">Bitte warte kurz.</p>
     <div class="w-64 progress-bar"><div class="progress-fill" id="analyze-progress" style="width:5%"></div></div>
   </div>
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════
      SCREEN 4 — RESULTS
-═══════════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <div id="screen-results" class="screen">
   <div class="min-h-screen flex flex-col">
-    <!-- Nav -->
-    <nav class="flex items-center justify-between px-8 py-5 sticky top-0 z-10" style="background:var(--bg); border-bottom:1px solid var(--border)">
+    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:var(--bg);border-bottom:1px solid var(--border)">
       <span class="font-bold text-xl" style="color:var(--accent)">StyleAI</span>
-      <div class="flex gap-3">
-        <button onclick="showScreen('screen-chat')" class="btn-outline text-sm px-4 py-2">💬 KI-Chat</button>
-        <button onclick="showScreen('screen-landing')" class="btn-outline text-sm px-4 py-2">↩ Neu starten</button>
-        <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
-          <svg id="icon-sun3" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          <svg id="icon-moon3" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      <div class="flex gap-2">
+        <button onclick="showScreen('screen-chat')" class="btn-outline text-sm px-3 py-2">💬 Chat</button>
+        <button onclick="showScreen('screen-landing')" class="btn-outline text-sm px-3 py-2">↩ Neu</button>
+        <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+          <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
         </button>
       </div>
     </nav>
 
     <div class="max-w-5xl mx-auto px-4 py-10 w-full">
-      <h1 class="text-3xl font-extrabold mb-2">Deine Outfit-Kombinationen ✨</h1>
-      <p class="mb-8" style="color:var(--sub)">Erstellt aus deinen eigenen Kleidungsstücken — passend zu aktuellen Trends 2026/2027.</p>
+      <div id="results-header"></div>
 
       <!-- Filter -->
       <div class="flex flex-wrap gap-2 mb-8" id="filter-chips">
@@ -325,16 +455,12 @@ tailwind.config = {
         <span class="chip" data-filter="Date" onclick="filterLooks('Date',this)">Date</span>
       </div>
 
-      <!-- Look cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="looks-grid">
-        <!-- populated by JS -->
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="looks-grid"></div>
 
-      <!-- Chat CTA -->
       <div class="mt-12 card p-8 text-center">
         <div class="text-4xl mb-3">💬</div>
-        <h3 class="text-xl font-bold mb-2">Weitere Fragen zu deinen Outfits?</h3>
-        <p class="mb-5" style="color:var(--sub)">Frag die KI — wo kaufen, wie kombinieren, welche Trends passen noch, Alternativen zu Kaufteilen...</p>
+        <h3 class="text-xl font-bold mb-2">Fragen zu deinen Outfits?</h3>
+        <p class="mb-5" style="color:var(--sub)">Wo kaufen, wie kombinieren, günstige Alternativen, weitere Trends…</p>
         <button class="btn-primary px-8 py-3" onclick="showScreen('screen-chat')">KI-Chat öffnen</button>
       </div>
     </div>
@@ -342,48 +468,45 @@ tailwind.config = {
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════
      SCREEN 5 — CHAT
-═══════════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <div id="screen-chat" class="screen">
   <div class="min-h-screen flex flex-col">
-    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:var(--bg); border-bottom:1px solid var(--border)">
+    <nav class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background:var(--bg);border-bottom:1px solid var(--border)">
       <div class="flex items-center gap-3">
-        <button onclick="showScreen('screen-results')" class="p-2 rounded-full" style="background:var(--bg2)" title="Zurück">
+        <button onclick="showScreen('screen-results')" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
         </button>
-        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
         <div>
           <div class="font-semibold">StyleAI Chat</div>
           <div class="text-xs" style="color:var(--green)">● Online</div>
         </div>
       </div>
-      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2)">
-        <svg id="icon-sun4" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg id="icon-moon4" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      <button onclick="toggleDark()" class="p-2 rounded-full" style="background:var(--bg2);border:none;cursor:pointer">
+        <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
     </nav>
 
-    <!-- Suggestion chips -->
     <div class="flex gap-2 px-4 py-3 overflow-x-auto" style="border-bottom:1px solid var(--border)">
-      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wo kann ich die empfohlenen Kaufteile günstig finden? Nenne konkrete Shops und Preise.')">🛍️ Wo kaufen?</button>
-      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Welche aktuellen Trends 2025 passen noch zu meinen Kleidungsstücken?')">✨ Mehr Trends</button>
-      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wie pflege ich meine Kleidungsstücke richtig damit sie länger halten?')">🧺 Pflege-Tipps</button>
-      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Gibt es günstige Alternativen zu den empfohlenen Kaufteilen, z.B. bei Vinted oder Zara?')">♻️ Alternativen</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wo kann ich die empfohlenen Teile günstig kaufen?')">🛍️ Wo kaufen?</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Welche Trends 2026/2027 passen noch zu meinem Stil?')">✨ Mehr Trends</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Gibt es günstigere Alternativen bei Vinted oder Zara?')">♻️ Alternativen</button>
+      <button class="chip flex-shrink-0 text-xs" onclick="quickChat('Wie pflege ich meine Kleidungsstücke richtig?')">🧺 Pflege-Tipps</button>
     </div>
 
-    <!-- Messages -->
     <div class="flex-1 overflow-y-auto px-4 py-6 space-y-4" id="chat-messages">
       <div class="flex gap-3">
         <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
-        <div class="chat-bubble ai">Hallo! 👋 Ich habe deine Looks analysiert und bin bereit, alle Fragen zu beantworten. Was möchtest du wissen?</div>
+        <div class="chat-bubble ai">Hallo! 👋 Ich habe deine Outfits erstellt und beantworte gerne alle Fragen — wo kaufen, wie kombinieren, Trends und mehr!</div>
       </div>
     </div>
 
-    <!-- Input -->
-    <div class="px-4 py-4" style="border-top:1px solid var(--border); background:var(--bg)">
+    <div class="px-4 py-4" style="border-top:1px solid var(--border);background:var(--bg)">
       <div class="flex gap-3 max-w-3xl mx-auto">
-        <input type="text" id="chat-input" placeholder="Frage die KI über deine Looks…" style="flex:1" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendChat();}">
+        <input type="text" id="chat-input" placeholder="Frag die KI…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat()}">
         <button class="btn-primary px-5" id="chat-send-btn" onclick="sendChat()">
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/></svg>
         </button>
@@ -393,9 +516,7 @@ tailwind.config = {
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
-     LOOK DETAIL OVERLAY
-═══════════════════════════════════════════════════════ -->
+<!-- Look Detail Overlay -->
 <div id="look-overlay" class="overlay" style="display:none" onclick="closeLookOverlay(event)">
   <div class="card overlay-card p-8 fade-in" onclick="event.stopPropagation()">
     <div id="overlay-content"></div>
@@ -404,422 +525,375 @@ tailwind.config = {
 </div>
 
 
-<!-- ═══════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════
      JAVASCRIPT
-═══════════════════════════════════════════════════════ -->
+═══════════════════════════════════════════ -->
 <script>
 // ── App state ──────────────────────────────────────────────────────────────
 const app = {
   isDark: false,
-  currentStep: 1,
-  uploadedImages: [],    // { src: dataUrl, mimeType, base64 }
-  formData: {},
+  mode: 'wardrobe',            // 'wardrobe' | 'generator'
+  uploadedImages: [],          // wardrobe photos
+  generatorImages: [],         // optional selfie for generator
+  wStep: 1, wTotal: 3,
+  gStep: 1, gTotal: 4,
+  wFormData: {},
+  gFormData: {},
   generatedLooks: [],
   chatMessages: [],
   savedLooks: new Set()
 };
 
-// ── Screen navigation ──────────────────────────────────────────────────────
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0, 0);
-}
-
 // ── Dark mode ──────────────────────────────────────────────────────────────
 function toggleDark() {
   app.isDark = !app.isDark;
   document.documentElement.setAttribute('data-theme', app.isDark ? 'dark' : 'light');
-  ['', '2', '3', '4'].forEach(n => {
-    const sun = document.getElementById('icon-sun' + n);
-    const moon = document.getElementById('icon-moon' + n);
-    if (sun) sun.style.display = app.isDark ? 'none' : 'block';
-    if (moon) moon.style.display = app.isDark ? 'block' : 'none';
-  });
+  document.querySelectorAll('.sun-icon').forEach(el => el.style.display = app.isDark ? 'none' : 'block');
+  document.querySelectorAll('.moon-icon').forEach(el => el.style.display = app.isDark ? 'block' : 'none');
 }
 
-// ── Chip selection (single) ────────────────────────────────────────────────
-function initSingleChips(containerId, stateKey) {
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', function () {
-      document.getElementById(containerId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+// ── Screen nav ─────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startMode(mode) {
+  app.mode = mode;
+  app.uploadedImages = [];
+  app.generatorImages = [];
+  app.wStep = 1; app.gStep = 1;
+  if (mode === 'wardrobe') { updateWWizard(); showScreen('screen-wardrobe'); }
+  else                     { updateGWizard(); showScreen('screen-generator'); }
+}
+
+// ── Chip helpers ───────────────────────────────────────────────────────────
+function initSingleChips(containerId, obj, key) {
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', function() {
+      document.getElementById(containerId).querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
       this.classList.add('selected');
-      app.formData[stateKey] = this.dataset.val;
+      obj[key] = this.dataset.val;
     });
   });
 }
-
-// ── Chip selection (multi) ─────────────────────────────────────────────────
-function initMultiChips(containerId, stateKey) {
-  app.formData[stateKey] = [];
-  document.getElementById(containerId).querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', function () {
+function initMultiChips(containerId, obj, key) {
+  obj[key] = [];
+  document.getElementById(containerId).querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', function() {
       this.classList.toggle('selected');
-      const val = this.dataset.val;
-      const arr = app.formData[stateKey];
-      const idx = arr.indexOf(val);
-      if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+      const v = this.dataset.val, arr = obj[key], i = arr.indexOf(v);
+      if (i === -1) arr.push(v); else arr.splice(i, 1);
     });
   });
 }
 
-// ── Wizard navigation ──────────────────────────────────────────────────────
-function wizardNext() {
-  if (app.currentStep === 4) { startAnalysis(); return; }
-  if (app.currentStep === 4 && !document.getElementById('dsgvo-check').checked) {
-    showError('Bitte stimme der Datenschutzerklärung zu.'); return;
+// ── Wardrobe Wizard ────────────────────────────────────────────────────────
+let wInitDone = false;
+function initWWizard() {
+  if (wInitDone) return; wInitDone = true;
+  initSingleChips('wchips-bodytype',  app.wFormData, 'bodyType');
+  initSingleChips('wchips-colortype', app.wFormData, 'colorType');
+  initMultiChips ('wchips-occasions', app.wFormData, 'occasions');
+}
+function updateWWizard() {
+  initWWizard();
+  document.querySelectorAll('.wstep').forEach((s,i) => s.style.display = i+1===app.wStep ? 'block' : 'none');
+  document.getElementById('w-step-label').textContent = `Schritt ${app.wStep} von ${app.wTotal}`;
+  for (let i=1;i<=app.wTotal;i++) document.getElementById('w-dot-'+i).className='step-dot'+(i<=app.wStep?' active':'');
+  document.getElementById('w-progress').style.width = (app.wStep/app.wTotal*100)+'%';
+  document.getElementById('w-btn-back').style.display = app.wStep > 1 ? 'block' : 'none';
+  document.getElementById('w-btn-next').textContent = app.wStep === app.wTotal ? '🔍 Analysieren' : 'Weiter →';
+}
+function wWizardNext() {
+  if (app.wStep === app.wTotal) {
+    if (!app.uploadedImages.length) { showError('Bitte lade mindestens 1 Foto hoch.'); return; }
+    if (!document.getElementById('w-dsgvo').checked) { showError('Bitte stimme der Datenschutzerklärung zu.'); return; }
+    app.wFormData.budget   = document.getElementById('wf-budget').value;
+    app.wFormData.lookCount= document.getElementById('wf-lookcount').value;
+    runAnalysis('wardrobe');
+    return;
   }
-  gatherStep();
-  app.currentStep++;
-  updateWizard();
+  app.wStep++;
+  updateWWizard();
 }
-function wizardBack() {
-  if (app.currentStep <= 1) return;
-  app.currentStep--;
-  updateWizard();
+function wWizardBack() { if (app.wStep>1){app.wStep--;updateWWizard();} }
+
+// ── Generator Wizard ───────────────────────────────────────────────────────
+let gInitDone = false;
+function initGWizard() {
+  if (gInitDone) return; gInitDone = true;
+  initSingleChips('gchips-bodytype',  app.gFormData, 'bodyType');
+  initSingleChips('gchips-colortype', app.gFormData, 'colorType');
+  initMultiChips ('gchips-styles',    app.gFormData, 'styles');
+  initMultiChips ('gchips-occasions', app.gFormData, 'occasions');
 }
-function gatherStep() {
-  app.formData.favoriteColors = document.getElementById('f-favoriteColors')?.value || '';
-  app.formData.avoidColors    = document.getElementById('f-avoidColors')?.value || '';
-  app.formData.budget         = document.getElementById('f-budget')?.value || '';
-  app.formData.specialNotes   = document.getElementById('f-specialNotes')?.value || '';
-  app.formData.lookCount      = document.getElementById('f-lookCount')?.value || '3';
+function updateGWizard() {
+  initGWizard();
+  document.querySelectorAll('.gstep').forEach((s,i) => s.style.display = i+1===app.gStep ? 'block' : 'none');
+  document.getElementById('g-step-label').textContent = `Schritt ${app.gStep} von ${app.gTotal}`;
+  for (let i=1;i<=app.gTotal;i++) document.getElementById('g-dot-'+i).className='step-dot'+(i<=app.gStep?' active':'');
+  document.getElementById('g-progress').style.width = (app.gStep/app.gTotal*100)+'%';
+  document.getElementById('g-btn-back').style.display = app.gStep > 1 ? 'block' : 'none';
+  document.getElementById('g-btn-next').textContent = app.gStep === app.gTotal ? '✨ Outfits generieren' : 'Weiter →';
 }
-function updateWizard() {
-  document.querySelectorAll('.wizard-step').forEach((s, i) => {
-    s.style.display = (i + 1 === app.currentStep) ? 'block' : 'none';
-  });
-  document.getElementById('step-label').textContent = `Schritt ${app.currentStep} von 4`;
-  for (let i = 1; i <= 4; i++) {
-    document.getElementById('dot-' + i).className = 'step-dot' + (i <= app.currentStep ? ' active' : '');
+function gWizardNext() {
+  if (app.gStep === app.gTotal) {
+    app.gFormData.budget    = document.getElementById('gf-budget').value;
+    app.gFormData.specialNotes = document.getElementById('gf-notes').value;
+    app.gFormData.lookCount = document.getElementById('gf-lookcount').value;
+    app.gFormData.favoriteColors = document.getElementById('gf-favoriteColors').value;
+    app.gFormData.avoidColors    = document.getElementById('gf-avoidColors').value;
+    runAnalysis('generator');
+    return;
   }
-  document.getElementById('progress-fill').style.width = (app.currentStep * 25) + '%';
-  document.getElementById('btn-back').style.display = app.currentStep > 1 ? 'block' : 'none';
-  document.getElementById('btn-next').textContent = app.currentStep === 4 ? '✨ Analyse starten' : 'Weiter →';
+  app.gStep++;
+  updateGWizard();
 }
+function gWizardBack() { if (app.gStep>1){app.gStep--;updateGWizard();} }
 
 // ── Image upload ───────────────────────────────────────────────────────────
 function handleFiles(files) {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowed = ['image/jpeg','image/png','image/webp'];
   Array.from(files).forEach(file => {
     if (!allowed.includes(file.type)) { showError('Nur JPG, PNG und WEBP erlaubt.'); return; }
-    if (file.size > 10 * 1024 * 1024) { showError(`${file.name} ist größer als 10 MB.`); return; }
-    if (app.uploadedImages.length >= 5) { showError('Maximal 5 Fotos erlaubt.'); return; }
-    const reader = new FileReader();
-    reader.onload = e => {
+    if (file.size > 10*1024*1024) { showError(`${file.name} ist zu groß (max 10 MB).`); return; }
+    if (app.uploadedImages.length >= 5) { showError('Maximal 5 Fotos.'); return; }
+    const r = new FileReader();
+    r.onload = e => {
       const src = e.target.result;
-      const match = src.match(/^data:(image\/\w+);base64,(.+)/);
-      if (match) {
-        app.uploadedImages.push({ src, mimeType: match[1], base64: match[2] });
-        renderPreviews();
-      }
+      const m = src.match(/^data:(image\/\w+);base64,(.+)/);
+      if (m) { app.uploadedImages.push({src, mimeType:m[1], base64:m[2]}); renderWPreviews(); }
     };
-    reader.readAsDataURL(file);
+    r.readAsDataURL(file);
   });
 }
-function renderPreviews() {
-  const grid = document.getElementById('image-preview');
-  grid.innerHTML = '';
-  app.uploadedImages.forEach((img, i) => {
-    const div = document.createElement('div');
-    div.className = 'relative';
-    div.innerHTML = `
-      <img src="${img.src}" class="w-full h-28 object-cover rounded-xl">
-      <button onclick="removeImage(${i})" class="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-lg font-bold" style="background:rgba(0,0,0,.55)">×</button>
-    `;
-    grid.appendChild(div);
+function handleFilesGenerator(files) {
+  const file = files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    const src = e.target.result;
+    const m = src.match(/^data:(image\/\w+);base64,(.+)/);
+    if (m) {
+      app.generatorImages = [{src, mimeType:m[1], base64:m[2]}];
+      const prev = document.getElementById('g-image-preview');
+      prev.innerHTML = `<img src="${src}" class="w-full h-32 object-cover rounded-xl">`;
+    }
+  };
+  r.readAsDataURL(file);
+}
+function renderWPreviews() {
+  const grid = document.getElementById('w-image-preview'); grid.innerHTML='';
+  app.uploadedImages.forEach((img,i) => {
+    const d = document.createElement('div'); d.className='relative';
+    d.innerHTML=`<img src="${img.src}" class="w-full h-28 object-cover rounded-xl"><button onclick="removeImage(${i})" class="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center text-white text-lg font-bold" style="background:rgba(0,0,0,.55)">×</button>`;
+    grid.appendChild(d);
   });
 }
-function removeImage(i) {
-  app.uploadedImages.splice(i, 1);
-  renderPreviews();
-}
-function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
-function onDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
-function onDrop(e)      { e.preventDefault(); onDragLeave(); handleFiles(e.dataTransfer.files); }
+function removeImage(i) { app.uploadedImages.splice(i,1); renderWPreviews(); }
+function onDragOver(e,id)  { e.preventDefault(); document.getElementById(id).classList.add('drag-over'); }
+function onDragLeave(id)   { document.getElementById(id).classList.remove('drag-over'); }
+function onDrop(e,id)      { e.preventDefault(); onDragLeave(id); handleFiles(e.dataTransfer.files); }
 
 // ── Analysis ───────────────────────────────────────────────────────────────
-async function startAnalysis() {
-  gatherStep();
-  if (!document.getElementById('dsgvo-check').checked) {
-    showError('Bitte stimme der Datenschutzerklärung zu.');
-    return;
-  }
-  showScreen('screen-analyzing');
+async function runAnalysis(mode) {
+  const isWardrobe = mode === 'wardrobe';
+  const profile    = isWardrobe ? app.wFormData : app.gFormData;
+  const images     = isWardrobe ? app.uploadedImages : app.generatorImages;
+  const count      = parseInt(profile.lookCount) || 3;
 
-  // Animate progress bar
-  let pct = 5;
+  document.getElementById('analyzing-title').textContent = isWardrobe ? 'Kleiderschrank wird analysiert…' : 'Outfits werden generiert…';
+  const msgs = isWardrobe
+    ? ['Kleidungsstücke werden erkannt…','Kombinationen werden berechnet…','Trends werden abgeglichen…','Finishing touches…']
+    : ['Körpertyp wird berücksichtigt…','Farbtyp wird analysiert…','Trend-Outfits werden erstellt…','Letzte Hand anlegen…'];
+
+  showScreen('screen-analyzing');
+  let pct = 5; let msgI = 0;
   const pbar = document.getElementById('analyze-progress');
-  const msgs = [
-    'Fotos werden analysiert…',
-    'Farbtyp wird erkannt…',
-    'Outfit-Kombinationen werden berechnet…',
-    'Letzte Hand anlegen…'
-  ];
-  let msgIdx = 0;
   const timer = setInterval(() => {
-    pct = Math.min(pct + (Math.random() * 6 + 2), 90);
-    pbar.style.width = pct + '%';
-    if (pct > 30 && msgIdx === 0) { document.getElementById('analyzing-msg').textContent = msgs[1]; msgIdx = 1; }
-    if (pct > 55 && msgIdx === 1) { document.getElementById('analyzing-msg').textContent = msgs[2]; msgIdx = 2; }
-    if (pct > 80 && msgIdx === 2) { document.getElementById('analyzing-msg').textContent = msgs[3]; msgIdx = 3; }
+    pct = Math.min(pct + Math.random()*6+2, 90);
+    pbar.style.width = pct+'%';
+    if (pct>25&&msgI===0){document.getElementById('analyzing-msg').textContent=msgs[1];msgI=1;}
+    if (pct>50&&msgI===1){document.getElementById('analyzing-msg').textContent=msgs[2];msgI=2;}
+    if (pct>75&&msgI===2){document.getElementById('analyzing-msg').textContent=msgs[3];msgI=3;}
   }, 600);
 
   try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch('/api/analyze', {
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        profile: app.formData,
-        images: app.uploadedImages.map(i => ({ mimeType: i.mimeType, data: i.base64 })),
-        count: parseInt(app.formData.lookCount) || 3
+        mode,
+        profile,
+        images: images.map(i=>({mimeType:i.mimeType, data:i.base64})),
+        count
       })
     });
-
-    clearInterval(timer);
-    pbar.style.width = '100%';
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || `Server-Fehler ${response.status}`);
-    }
-
-    const data = await response.json();
+    clearInterval(timer); pbar.style.width='100%';
+    if (!res.ok) { const e=await res.json(); throw new Error(e.error||'Serverfehler'); }
+    const data = await res.json();
     app.generatedLooks = data.looks || [];
-
-    if (!app.generatedLooks.length) throw new Error('Die KI hat keine Looks zurückgegeben.');
-
-    renderResults();
+    if (!app.generatedLooks.length) throw new Error('KI hat keine Looks zurückgegeben.');
+    renderResults(mode);
     showScreen('screen-results');
-
-  } catch (err) {
+  } catch(err) {
     clearInterval(timer);
-    showScreen('screen-wizard');
-    updateWizard();
-    showError('Analyse fehlgeschlagen: ' + err.message);
-    console.error(err);
+    showScreen(isWardrobe ? 'screen-wardrobe' : 'screen-generator');
+    showError('Fehler: '+err.message);
   }
 }
 
-// ── Render look cards ──────────────────────────────────────────────────────
-function renderResults() {
-  const grid = document.getElementById('looks-grid');
-  grid.innerHTML = '';
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults(mode) {
+  const isWardrobe = mode === 'wardrobe';
+  document.getElementById('results-header').innerHTML = isWardrobe
+    ? `<h1 class="text-3xl font-extrabold mb-2">Deine Kleiderschrank-Outfits ✨</h1><p class="mb-8" style="color:var(--sub)">Kombiniert aus deinen eigenen Teilen — passend zu Trends 2026/2027.</p>`
+    : `<h1 class="text-3xl font-extrabold mb-2">Deine Trend-Outfits ✨</h1><p class="mb-8" style="color:var(--sub)">Personalisiert nach deinem Körper- und Farbtyp — Trends 2026/2027.</p>`;
+
+  const grid = document.getElementById('looks-grid'); grid.innerHTML='';
   app.generatedLooks.forEach(look => {
     const card = document.createElement('div');
-    card.className = 'card look-card fade-in';
-    card.dataset.tags = (look.tags || []).join(',');
-    const wardrobeCount = (look.wardrobeItems || []).length;
-    const buyCount = (look.items || []).filter(i => i.category && i.category.includes('🛍️')).length;
-    card.innerHTML = `
-      <div class="h-40 rounded-t-2xl flex items-end p-4" style="background:${look.gradient || 'linear-gradient(135deg,#795A71,#CF9775)'}">
+    card.className='card look-card fade-in';
+    card.dataset.tags=(look.tags||[]).join(',');
+    const ownCount = (look.items||[]).filter(i=>i.category?.includes('✅')).length;
+    const buyCount = (look.items||[]).filter(i=>i.category?.includes('🛍️')).length;
+    const badges = isWardrobe
+      ? `${ownCount?`<span class="tag" style="background:#e8f5e9;color:#2e7d32">✅ ${ownCount} vorhanden</span>`:''}${buyCount?`<span class="tag" style="background:#fff3e0;color:#e65100">🛍️ ${buyCount} kaufen</span>`:''}`
+      : `<span class="tag" style="background:#f3e5f5;color:#6a1b9a">✨ Generator</span>`;
+
+    card.innerHTML=`
+      <div class="h-40 rounded-t-2xl flex items-end p-4" style="background:${look.gradient||'linear-gradient(135deg,#795A71,#CF9775)'}">
         <div class="w-full">
-          <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,255,255,.75)">${look.occasion || ''}</span>
-          <h3 class="text-xl font-extrabold text-white">${look.name || 'Look ' + look.id}</h3>
-          ${look.trend ? `<p class="text-xs mt-1" style="color:rgba(255,255,255,.8)">✨ ${look.trend}</p>` : ''}
+          <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(255,255,255,.75)">${look.occasion||''}</span>
+          <h3 class="text-xl font-extrabold text-white">${look.name||'Look '+look.id}</h3>
+          ${look.trend?`<p class="text-xs mt-1" style="color:rgba(255,255,255,.8)">✨ ${look.trend}</p>`:''}
         </div>
       </div>
       <div class="p-5">
-        <div class="flex gap-1 flex-wrap mb-3">
-          ${wardrobeCount ? `<span class="tag" style="background:#e8f5e9;color:#2e7d32">✅ ${wardrobeCount} eigene Teile</span>` : ''}
-          ${buyCount ? `<span class="tag" style="background:#fff3e0;color:#e65100">🛍️ ${buyCount} Kauftipp${buyCount > 1 ? 's' : ''}</span>` : ''}
-          ${(look.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
-        </div>
-        <p class="text-sm mb-4 line-clamp-3" style="color:var(--sub)">${look.description || ''}</p>
+        <div class="flex gap-1 flex-wrap mb-3">${badges} ${(look.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <p class="text-sm mb-4" style="color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${look.description||''}</p>
         <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold" style="color:var(--sand)">${look.priceRange || ''}</span>
+          <span class="text-sm font-semibold" style="color:var(--sand)">${look.priceRange||''}</span>
           <button class="btn-primary text-sm px-4 py-2" onclick="openLook(${look.id})">Details →</button>
         </div>
-      </div>
-    `;
+      </div>`;
     grid.appendChild(card);
   });
 }
 
-// ── Filter looks ───────────────────────────────────────────────────────────
+// ── Filter ─────────────────────────────────────────────────────────────────
 function filterLooks(filter, el) {
-  document.querySelectorAll('#filter-chips .chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#filter-chips .chip').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
-  document.querySelectorAll('#looks-grid .look-card').forEach(card => {
-    const tags = card.dataset.tags || '';
-    card.style.display = (filter === 'all' || tags.includes(filter)) ? 'block' : 'none';
+  document.querySelectorAll('#looks-grid .look-card').forEach(c=>{
+    c.style.display=(filter==='all'||c.dataset.tags.includes(filter))?'block':'none';
   });
 }
 
 // ── Look detail overlay ────────────────────────────────────────────────────
 function openLook(id) {
-  const look = app.generatedLooks.find(l => l.id === id);
-  if (!look) return;
+  const look = app.generatedLooks.find(l=>l.id===id); if(!look) return;
   const saved = app.savedLooks.has(id);
-  const ownItems  = (look.items || []).filter(i => i.category && i.category.includes('✅'));
-  const buyItems  = (look.items || []).filter(i => i.category && i.category.includes('🛍️'));
-  const otherItems = (look.items || []).filter(i => !i.category?.includes('✅') && !i.category?.includes('🛍️'));
+  const ownItems   = (look.items||[]).filter(i=>i.category?.includes('✅')||i.category?.includes('👚')||i.category?.includes('👖')||i.category?.includes('👟')||i.category?.includes('💍'));
+  const buyItems   = (look.items||[]).filter(i=>i.category?.includes('🛍️'));
+  const isWardrobe = app.mode === 'wardrobe';
 
-  document.getElementById('overlay-content').innerHTML = `
+  const renderItems = (items, style) => items.map(item=>`
+    <div class="flex items-start gap-3 p-3 rounded-xl" style="${style}">
+      <div class="text-xs font-bold px-2 py-1 rounded flex-shrink-0 text-center" style="min-width:60px;background:${isWardrobe&&item.category?.includes('✅')?'#2e7d32':'var(--accent)'};color:white">${item.category}</div>
+      <div>
+        <div class="font-semibold">${item.item} <span style="color:var(--sub)">· ${item.color}</span></div>
+        <div class="text-sm" style="color:var(--sub)">${item.tip}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('overlay-content').innerHTML=`
     <div class="h-32 rounded-2xl mb-5 flex items-end p-5" style="background:${look.gradient}">
       <div class="w-full">
-        <span class="text-xs text-white opacity-70 uppercase tracking-widest">${look.occasion || ''}</span>
+        <span class="text-xs text-white opacity-70 uppercase tracking-widest">${look.occasion||''}</span>
         <h2 class="text-2xl font-extrabold text-white">${look.name}</h2>
-        ${look.trend ? `<p class="text-xs mt-1 text-white opacity-80">✨ ${look.trend}</p>` : ''}
+        ${look.trend?`<p class="text-xs mt-1 text-white opacity-80">✨ ${look.trend}</p>`:''}
       </div>
     </div>
+    <p class="mb-4" style="color:var(--sub)">${look.description||''}</p>
+    ${look.fit?`<div class="p-3 rounded-xl mb-4 text-sm" style="background:var(--bg2)"><strong>Schnitt-Tipp:</strong> ${look.fit}</div>`:''}
 
-    <p class="mb-4" style="color:var(--sub)">${look.description || ''}</p>
+    ${isWardrobe ? `
+      ${ownItems.length?`<h4 class="font-bold mb-2" style="color:#2e7d32">✅ Deine vorhandenen Teile</h4><div class="space-y-2 mb-4">${renderItems(ownItems,'background:#f0faf4;border:1px solid #c8e6c9')}</div>`:''}
+      ${buyItems.length?`<h4 class="font-bold mb-2" style="color:#e65100">🛍️ Empfohlene Kaufteile</h4><div class="space-y-2 mb-4">${renderItems(buyItems,'background:#fff8e1;border:1px solid #ffe082')}</div>`:''}
+    ` : `
+      <h4 class="font-bold mb-2">Outfit-Teile</h4>
+      <div class="space-y-2 mb-4">${renderItems([...ownItems,...buyItems],'background:var(--bg2)')}</div>
+    `}
 
-    ${look.fit ? `<div class="p-3 rounded-xl mb-4 text-sm" style="background:var(--bg2)"><strong>Schnitt-Tipp:</strong> ${look.fit}</div>` : ''}
-
-    ${ownItems.length || otherItems.length ? `
-    <h4 class="font-bold mb-2" style="color:var(--green)">✅ Deine vorhandenen Teile</h4>
-    <div class="space-y-2 mb-4">
-      ${[...ownItems, ...otherItems].map(item => `
-        <div class="flex items-start gap-3 p-3 rounded-xl" style="background:#f0faf4;border:1px solid #c8e6c9">
-          <div class="text-xs font-bold px-2 py-1 rounded flex-shrink-0" style="background:#2e7d32;color:white">✅ HAST DU</div>
-          <div>
-            <div class="font-semibold" style="color:#1b5e20">${item.item} <span style="color:#4caf50">· ${item.color}</span></div>
-            <div class="text-sm" style="color:#388e3c">${item.tip}</div>
-          </div>
-        </div>`).join('')}
-    </div>` : ''}
-
-    ${buyItems.length ? `
-    <h4 class="font-bold mb-2" style="color:var(--sand)">🛍️ Empfohlene Ergänzungen</h4>
-    <div class="space-y-2 mb-4">
-      ${buyItems.map(item => `
-        <div class="flex items-start gap-3 p-3 rounded-xl" style="background:#fff8e1;border:1px solid #ffe082">
-          <div class="text-xs font-bold px-2 py-1 rounded flex-shrink-0" style="background:#f57c00;color:white">KAUFEN</div>
-          <div>
-            <div class="font-semibold" style="color:#e65100">${item.item} <span style="color:#ff9800">· ${item.color}</span></div>
-            <div class="text-sm" style="color:#bf360c">${item.tip}</div>
-          </div>
-        </div>`).join('')}
-    </div>
-    ${look.shoppingTip ? `<div class="p-3 rounded-xl mb-4 text-sm" style="background:var(--bg2)">🛒 <strong>Shopping-Tipp:</strong> ${look.shoppingTip}</div>` : ''}` : ''}
+    ${look.shoppingTip?`<div class="p-3 rounded-xl mb-4 text-sm" style="background:var(--bg2)">🛒 <strong>Shopping-Tipp:</strong> ${look.shoppingTip}</div>`:''}
 
     <div class="flex items-center gap-3 flex-wrap mt-2">
-      <div class="flex gap-1">${(look.colors || []).map(c => `<div class="w-6 h-6 rounded-full border-2" style="background:${c};border-color:var(--border)" title="${c}"></div>`).join('')}</div>
-      <span class="text-sm font-semibold ml-1" style="color:var(--sand)">${look.priceRange || ''}</span>
-      <button onclick="toggleSave(${id})" id="save-btn-${id}" class="btn-outline text-sm px-3 py-1 ml-auto">${saved ? '♥ Gespeichert' : '♡ Speichern'}</button>
-    </div>
-  `;
-  document.getElementById('look-overlay').style.display = 'flex';
+      <div class="flex gap-1">${(look.colors||[]).map(c=>`<div class="w-6 h-6 rounded-full border-2" style="background:${c};border-color:var(--border)"></div>`).join('')}</div>
+      <span class="text-sm font-semibold" style="color:var(--sand)">${look.priceRange||''}</span>
+      <button onclick="toggleSave(${id})" id="save-btn-${id}" class="btn-outline text-sm px-3 py-1 ml-auto">${saved?'♥ Gespeichert':'♡ Speichern'}</button>
+    </div>`;
+
+  document.getElementById('look-overlay').style.display='flex';
 }
-function closeLookOverlay(e) {
-  if (e.target === document.getElementById('look-overlay')) {
-    document.getElementById('look-overlay').style.display = 'none';
-  }
-}
+function closeLookOverlay(e) { if(e.target===document.getElementById('look-overlay')) document.getElementById('look-overlay').style.display='none'; }
 function toggleSave(id) {
-  if (app.savedLooks.has(id)) app.savedLooks.delete(id); else app.savedLooks.add(id);
-  const btn = document.getElementById('save-btn-' + id);
-  if (btn) btn.textContent = app.savedLooks.has(id) ? '♥ Gespeichert' : '♡ Speichern';
+  if(app.savedLooks.has(id))app.savedLooks.delete(id);else app.savedLooks.add(id);
+  const btn=document.getElementById('save-btn-'+id);
+  if(btn)btn.textContent=app.savedLooks.has(id)?'♥ Gespeichert':'♡ Speichern';
 }
 
 // ── Chat ───────────────────────────────────────────────────────────────────
 async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim(); if(!msg) return;
+  input.value='';
+  addChatMessage('user',msg);
+  app.chatMessages.push({role:'user',content:msg});
 
-  addChatMessage('user', msg);
-  app.chatMessages.push({ role: 'user', content: msg });
-
-  // Typing indicator
-  const typingId = 'typing-' + Date.now();
-  const typingDiv = document.createElement('div');
-  typingDiv.id = typingId;
-  typingDiv.className = 'flex gap-3';
-  typingDiv.innerHTML = `
-    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>
-    <div class="chat-bubble ai" style="padding:14px 16px">
-      <span class="inline-flex gap-1">
-        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .0s"></span>
-        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .2s"></span>
-        <span class="w-2 h-2 rounded-full" style="background:var(--sub); animation: bounce 1s infinite .4s"></span>
-      </span>
-    </div>`;
-  document.getElementById('chat-messages').appendChild(typingDiv);
+  const typId='typ-'+Date.now();
+  const typDiv=document.createElement('div'); typDiv.id=typId; typDiv.className='flex gap-3';
+  typDiv.innerHTML=`<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div><div class="chat-bubble ai" style="padding:14px 16px"><span class="inline-flex gap-1"><span class="w-2 h-2 rounded-full" style="background:var(--sub);animation:bounce 1s infinite 0s"></span><span class="w-2 h-2 rounded-full" style="background:var(--sub);animation:bounce 1s infinite .2s"></span><span class="w-2 h-2 rounded-full" style="background:var(--sub);animation:bounce 1s infinite .4s"></span></span></div>`;
+  document.getElementById('chat-messages').appendChild(typDiv);
   scrollChat();
-
-  document.getElementById('chat-send-btn').disabled = true;
+  document.getElementById('chat-send-btn').disabled=true;
 
   try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: app.chatMessages,
-        looks: app.generatedLooks.map(l => ({ name: l.name, occasion: l.occasion, id: l.id }))
-      })
-    });
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:app.chatMessages,looks:app.generatedLooks.map(l=>({id:l.id,name:l.name,occasion:l.occasion}))})});
+    typDiv.remove();
+    if(!res.ok){const e=await res.json();throw new Error(e.error||'Fehler');}
+    const data=await res.json();
+    addChatMessage('ai',data.reply);
+    app.chatMessages.push({role:'assistant',content:data.reply});
+  } catch(err){typDiv.remove();addChatMessage('ai','⚠️ '+err.message);}
+  finally{document.getElementById('chat-send-btn').disabled=false;document.getElementById('chat-input').focus();}
+}
+function quickChat(msg){document.getElementById('chat-input').value=msg;sendChat();}
+function addChatMessage(role,text){
+  const c=document.getElementById('chat-messages');
+  const d=document.createElement('div'); d.className='flex gap-3'+(role==='user'?' flex-row-reverse':'');
+  const av=role==='user'
+    ?`<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0 font-bold" style="background:var(--accent)">Du</div>`
+    :`<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>`;
+  d.innerHTML=av+`<div class="chat-bubble ${role}">${escHtml(text).replace(/\n/g,'<br>')}</div>`;
+  c.appendChild(d); scrollChat();
+}
+function scrollChat(){const c=document.getElementById('chat-messages');setTimeout(()=>c.scrollTop=c.scrollHeight,60);}
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-    typingDiv.remove();
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Serverfehler');
-    }
-
-    const data = await response.json();
-    addChatMessage('ai', data.reply);
-    app.chatMessages.push({ role: 'assistant', content: data.reply });
-
-  } catch (err) {
-    typingDiv.remove();
-    addChatMessage('ai', '⚠️ Fehler: ' + err.message);
-  } finally {
-    document.getElementById('chat-send-btn').disabled = false;
-    input.focus();
-  }
+// ── Error toast ────────────────────────────────────────────────────────────
+function showError(msg){
+  const t=document.createElement('div');t.className='error-toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),4500);
 }
 
-function quickChat(msg) {
-  document.getElementById('chat-input').value = msg;
-  sendChat();
-}
+// ── Helpers: gradient + tags ───────────────────────────────────────────────
+// (Used only if server doesn't enrich — normally server sends gradient/tags)
 
-function addChatMessage(role, text) {
-  const container = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'flex gap-3' + (role === 'user' ? ' flex-row-reverse' : '');
-  const avatar = role === 'user'
-    ? `<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 font-bold" style="background:var(--accent)">Du</div>`
-    : `<div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0" style="background:linear-gradient(135deg,#795A71,#CF9775)">S</div>`;
-  div.innerHTML = avatar + `<div class="chat-bubble ${role}">${escapeHtml(text).replace(/\n/g,'<br>')}</div>`;
-  container.appendChild(div);
-  scrollChat();
-}
-
-function scrollChat() {
-  const c = document.getElementById('chat-messages');
-  setTimeout(() => c.scrollTop = c.scrollHeight, 60);
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-
-function showError(msg) {
-  const toast = document.createElement('div');
-  toast.className = 'error-toast';
-  toast.textContent = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4500);
-}
-
-// Bounce animation for typing dots
-const style = document.createElement('style');
-style.textContent = `@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }`;
-document.head.appendChild(style);
-
-// ── Init ───────────────────────────────────────────────────────────────────
-initSingleChips('chips-bodytype',  'bodyType');
-initSingleChips('chips-colortype', 'colorType');
-initMultiChips ('chips-styles',    'styles');
-initMultiChips ('chips-occasions', 'occasions');
+// ── Bounce animation ───────────────────────────────────────────────────────
+const s=document.createElement('style');
+s.textContent='@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}';
+document.head.appendChild(s);
 </script>
 </body>
 </html>

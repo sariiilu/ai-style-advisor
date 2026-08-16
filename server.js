@@ -39,82 +39,131 @@ async function callGemini(parts, maxTokens = 5000, temperature = 0.85) {
   return text;
 }
 
-// ── Helper: wardrobe + trend prompt ───────────────────────────────────────
-function buildStylePrompt(profile, count) {
-  return `Du bist ein professioneller Fashion-Stilberater mit Expertise in aktuellen Trends (2024/2025).
+// ── Trend-Liste 2026/2027 (für beide Modi) ────────────────────────────────
+const TRENDS_2026 = `
+Aktuelle Modetrends 2026/2027:
+- Fluid Tailoring: weiche, fließende Anzugteile in gedeckten Tönen (Taupe, Stein, Schiefergrau)
+- Utility Chic: Cargo-Details, technische Stoffe und funktionale Elemente elegant kombiniert
+- New Romanticism: Rüschen, florale Prints, Puffärmel — modern und selbstbewusst interpretiert
+- Tonal Dressing: Monochrome Looks in einer Farbe, verschiedene Texturen und Töne
+- Deconstructed Classics: Klassiker neu interpretiert — asymmetrisch, oversized, unfertig wirkend
+- Sport Luxe 2.0: Sportliche Silhouetten mit luxuriösen Materialien kombiniert
+- Neo-Minimalism: Hochwertige Basics, klare Linien, reduzierte Accessoires in Nude/Weiß/Schwarz
+- Retro Futurism: Metallische Akzente, strukturierte Schultern, Space-Age-Details
+- Coastal Cool: Leinen, maritime Farben, entspannte aber polierte Eleganz
+- Power Feminine: Starke Schultern, taillierte Schnitte, tiefe Farben (Bordeaux, Pflaume, Nachtblau)
+- Gorpcore: Outdoor-Funktionskleidung (Fleece, Wander-Ästhetik) als modisches Statement
+- Quiet Luxury: Dezente Logos, hochwertige Materialien, zeitloser Stil ohne Auffälligkeit`;
+
+// ── Helper: Wardrobe-Modus Prompt (Kleiderschrank analysieren) ─────────────
+function buildWardrobePrompt(profile, count) {
+  return `Du bist ein professioneller Fashion-Stilberater mit Expertise in den neuesten Trends.
 
 SCHRITT 1 — KLEIDERSCHRANK ANALYSIEREN:
 Schaue dir alle hochgeladenen Fotos genau an. Identifiziere jeden sichtbaren Kleidungsstück:
-- Art des Teils (z.B. Blazer, Jeans, Bluse, Sneaker)
+- Art (z.B. Blazer, Jeans, Bluse, Sneaker, Kleid, Mantel)
 - Farbe und Material soweit erkennbar
 - Stil (klassisch, casual, sportlich, elegant etc.)
 
 NUTZERPROFIL:
 - Körpertyp: ${profile.bodyType || 'nicht angegeben'}
 - Farbtyp: ${profile.colorType || 'nicht angegeben'}
-- Bevorzugte Stile: ${(profile.styles || []).join(', ') || 'nicht angegeben'}
-- Anlässe: ${(profile.occasions || []).join(', ') || 'nicht angegeben'}
 - Budget für Ergänzungen: ${profile.budget || 'nicht angegeben'}
 - Lieblingsfarben: ${profile.favoriteColors || 'nicht angegeben'}
-- Vermeiden: ${profile.avoidColors || 'nicht angegeben'}
-- Besonderheiten: ${profile.specialNotes || 'keine'}
+- Farben/Muster vermeiden: ${profile.avoidColors || 'nicht angegeben'}
+- Gewünschte Anlässe: ${(profile.occasions || []).join(', ') || 'nicht angegeben'}
 
-SCHRITT 2 — OUTFITS AUS VORHANDENEN TEILEN ERSTELLEN:
-Kombiniere die erkannten Kleidungsstücke zu ${count} trendigen Outfits passend zu aktuellen 2026/2027 Modetrends. Nutze dabei folgende aktuelle Trends:
-- Fluid Tailoring (weiche, fließende Anzugteile in gedeckten Tönen)
-- Utility Chic (funktionale Elemente wie Cargo-Details, technische Stoffe, stylisch kombiniert)
-- New Romanticism (romantische Silhouetten, Rüschen, florale Prints modern gestylt)
-- Tonal Dressing / Monochrome Layers (ein-Ton-Outfits in Erdtönen, Camel, Beige, Schiefer)
-- Deconstructed Classics (klassische Stücke neu interpretiert, asymmetrisch, oversized)
-- Sport Luxe 2.0 (sportliche Teile mit luxuriösen Elementen kombiniert)
-- Neo-Minimalism (klare Linien, hochwertige Basics, reduzierte Accessoires)
-- Retro Futurism (metallische Akzente, strukturierte Silhouetten, Space-Age-Details)
-- Coastal Cool (leichte Leinenstoffe, maritime Farben, entspannte Eleganz)
-- Power Feminine (starke Schultern, taillierte Schnitte, feminine Farben wie Bordeaux, Pflaume)
+${TRENDS_2026}
 
-SCHRITT 3 — JSON-AUSGABE:
-Antworte NUR mit einem JSON-Array, kein Text davor/danach, keine Markdown-Codeblöcke.
+SCHRITT 2 — ${count} OUTFITS AUS VORHANDENEN TEILEN ERSTELLEN:
+Kombiniere die erkannten Kleidungsstücke zu trendigen Outfits. Nutze primär vorhandene Teile, schlage maximal 2 Kaufteile pro Outfit vor.
 
-Jedes Objekt MUSS exakt diese Felder haben:
+Antworte NUR mit diesem JSON-Array (kein Text davor/danach, keine Markdown-Blöcke):
 [
   {
-    "name": "Kreativer Outfit-Name (z.B. 'Quiet Luxury Monday')",
+    "name": "Kreativer Outfit-Name",
     "occasion": "Anlass (Business / Casual / Abend / Date / Wochenende)",
-    "trend": "Aktueller Trend 2024/2025 den dieses Outfit aufgreift (1 Satz)",
-    "description": "2-3 Sätze: welche deiner Teile kombiniert werden und warum es trendig ist",
-    "wardrobeItems": [
-      "Beschreibung Teil 1 aus dem Kleiderschrank-Foto",
-      "Beschreibung Teil 2 aus dem Kleiderschrank-Foto"
-    ],
+    "trend": "Welchen 2026/2027-Trend greift dieses Outfit auf (1 Satz)",
+    "description": "2-3 Sätze: welche Teile kombiniert werden und warum es trendig ist",
+    "wardrobeItems": ["Teil 1 aus Kleiderschrank-Foto", "Teil 2 aus Kleiderschrank-Foto"],
     "items": [
-      { "category": "✅ Vorhanden", "item": "Konkretes Teil aus deinem Kleiderschrank", "color": "Farbe", "tip": "Wie du es stylen solltest" },
-      { "category": "✅ Vorhanden", "item": "Weiteres Teil aus deinem Kleiderschrank", "color": "Farbe", "tip": "Styling-Tipp" },
-      { "category": "🛍️ Ergänzung", "item": "1 empfohlenes Kaufteil das fehlt", "color": "Empfohlene Farbe", "tip": "Warum dieses Teil den Look vervollständigt" },
-      { "category": "🛍️ Ergänzung", "item": "Optionales 2. Kaufteil (Accessoire oder Schuhe)", "color": "Farbe", "tip": "Styling-Tipp" }
+      { "category": "✅ Vorhanden", "item": "Konkretes Teil aus dem Kleiderschrank", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "✅ Vorhanden", "item": "Weiteres vorhandenes Teil", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "🛍️ Kauftipp", "item": "Empfohlenes Ergänzungsteil", "color": "Empfohlene Farbe", "tip": "Warum es den Look vervollständigt" },
+      { "category": "🛍️ Kauftipp", "item": "Optionales Accessoire oder Schuhe", "color": "Farbe", "tip": "Styling-Tipp" }
     ],
     "colors": ["#HEX1", "#HEX2", "#HEX3"],
-    "priceRange": "Budget für die Ergänzungen: € / €€ / €€€",
-    "shoppingTip": "Wo und wie man die empfohlenen Ergänzungen günstig findet (z.B. Zara, H&M, Vinted, Vintage-Shops)"
+    "priceRange": "Kaufteile kosten ca.: € / €€ / €€€",
+    "shoppingTip": "Konkrete Shops für die Kaufteile (Zara, H&M, Vinted, About You etc.)"
   }
-]
+]`;`;
+}
 
-WICHTIG: Nutze primär die bereits vorhandenen Kleidungsstücke. Empfehle maximal 2 Kaufteile pro Outfit. Sei spezifisch bei der Beschreibung der vorhandenen Teile (z.B. 'der hellblaue Oversized-Blazer aus Foto 2').`;
+// ── Helper: Generator-Modus Prompt (Profil-basiert, ohne eigene Kleidung) ──
+function buildGeneratorPrompt(profile, count) {
+  const occasions = (profile.occasions || []).join(', ') || 'Alltag';
+  return `Du bist ein professioneller Fashion-Stilberater. Erstelle ${count} komplette, kauffertige Outfit-Empfehlungen passend zum Profil und aktuellen Trends.
+
+NUTZERPROFIL:
+- Körpertyp: ${profile.bodyType || 'nicht angegeben'}
+- Farbtyp: ${profile.colorType || 'nicht angegeben'}
+- Bevorzugte Stile: ${(profile.styles || []).join(', ') || 'nicht angegeben'}
+- Gewünschte Anlässe: ${occasions}
+- Budget: ${profile.budget || 'nicht angegeben'}
+- Lieblingsfarben: ${profile.favoriteColors || 'nicht angegeben'}
+- Farben/Muster vermeiden: ${profile.avoidColors || 'nicht angegeben'}
+- Besonderheiten: ${profile.specialNotes || 'keine'}
+
+${TRENDS_2026}
+
+AUFGABE: Erstelle ${count} vollständige Outfit-Empfehlungen die:
+1. Perfekt zum Körpertyp und Farbtyp passen
+2. Aktuelle 2026/2027-Trends aufgreifen
+3. Für die gewünschten Anlässe geeignet sind
+4. Konkrete, kaufbare Kleidungsstücke nennen (mit Markenbeispielen wenn passend)
+${profile.bodyType ? `5. Schnitte wählen die ${profile.bodyType} optimal in Szene setzen` : ''}
+
+Antworte NUR mit diesem JSON-Array (kein Text davor/danach, keine Markdown-Blöcke):
+[
+  {
+    "name": "Kreativer Outfit-Name",
+    "occasion": "Anlass (Business / Casual / Abend / Date / Wochenende)",
+    "trend": "Welchen 2026/2027-Trend greift dieses Outfit auf (1 Satz)",
+    "description": "2-3 Sätze warum dieses Outfit perfekt zum Profil und Trend passt",
+    "wardrobeItems": [],
+    "items": [
+      { "category": "👚 Oberteil", "item": "Konkretes Kleidungsstück + Markenbeispiel", "color": "Empfohlene Farbe", "tip": "Warum dieser Schnitt für den Körpertyp ideal ist" },
+      { "category": "👖 Hose/Rock", "item": "Konkretes Kleidungsstück", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "👟 Schuhe", "item": "Schuhtyp + Beispiel", "color": "Farbe", "tip": "Styling-Tipp" },
+      { "category": "💍 Accessoires", "item": "Tasche, Schmuck oder Gürtel", "color": "Farbe", "tip": "Finishing Touch" }
+    ],
+    "colors": ["#HEX1", "#HEX2", "#HEX3"],
+    "priceRange": "Gesamtbudget ca.: € (<100€) / €€ (100-300€) / €€€ (300€+)",
+    "shoppingTip": "Wo man dieses Outfit günstig zusammenstellt (Zara, H&M, Mango, Vinted, About You, ASOS etc.)",
+    "fit": "Warum diese Silhouette optimal für den Körpertyp ist"
+  }
+]`;
 }
 
 // ── POST /api/analyze ──────────────────────────────────────────────────────
 app.post('/api/analyze', async (req, res) => {
   try {
-    const { profile, images, count = 3 } = req.body;
+    const { profile, images, count = 3, mode = 'wardrobe' } = req.body;
     if (!profile) return res.status(400).json({ error: 'Kein Profil übermittelt.' });
 
-    // Build parts: optional images + text prompt
+    const n = parseInt(count) || 3;
+    const prompt = mode === 'generator'
+      ? buildGeneratorPrompt(profile, n)
+      : buildWardrobePrompt(profile, n);
+
+    // Build parts: optional images (wardrobe mode) + text prompt
     const parts = [];
     for (const img of (images || [])) {
       if (img?.data && img?.mimeType) {
         parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } });
       }
     }
-    parts.push({ text: buildStylePrompt(profile, parseInt(count) || 3) });
+    parts.push({ text: prompt });
 
     const text = await callGemini(parts, 6000, 0.85);
 
