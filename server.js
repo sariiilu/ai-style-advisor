@@ -96,7 +96,7 @@ Antworte NUR mit diesem JSON-Array (kein Text davor/danach, keine Markdown-Blöc
     "priceRange": "Kaufteile kosten ca.: € / €€ / €€€",
     "shoppingTip": "Konkrete Shops für die Kaufteile (Zara, H&M, Vinted, About You etc.)"
   }
-]`;`;
+]`;
 }
 
 // ── Helper: Generator-Modus Prompt (Profil-basiert, ohne eigene Kleidung) ──
